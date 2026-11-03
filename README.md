@@ -98,7 +98,7 @@
 
 * **Identificador de Servicio:** `ms-pagos-suscripciones`
 * **Paquete Arquitectónico:** `Paquete 4: Pagos y Estadisticas`
-* **Puerto de Escucha Oficial:** `8089`
+* **Puerto de Escucha Oficial:** `8090`
 * **Base de Datos Asignada:** `PostgreSQL 16` (`<nombre_db>_db`), aislada bajo el patrón *Database-per-Service*.
 * **Bounded Context:** `Pagos de Suscripciones`
 
@@ -257,9 +257,9 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 | :--- | :---: | :--- | :--- | :--- | :--- |
 | **Producción (PROD)** | Active | Despliegue productivo de StyleRadar | `https://styleradar-backend-prod.azurewebsites.net` | [Swagger UI PROD](https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html) | [`/actuator/health`](https://styleradar-backend-prod.azurewebsites.net/actuator/health) |
 | **Calidad / Pruebas (QA)** | Active | Pruebas integradas de Sprint y QA | `https://styleradar-backend-qa.azurewebsites.net` | [Swagger UI QA](https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html) | [`/actuator/health`](https://styleradar-backend-qa.azurewebsites.net/actuator/health) |
-| **Desarrollo Local (DEV)** | Local | Entorno de desarrollo local en máquina | `http://localhost:8089` | [Swagger UI Local](http://localhost:8089/swagger-ui.html) | [`/actuator/health`](http://localhost:8089/actuator/health) |
+| **Desarrollo Local (DEV)** | Local | Entorno de desarrollo local en máquina | `http://localhost:8090` | [Swagger UI Local](http://localhost:8090/swagger-ui.html) | [`/actuator/health`](http://localhost:8090/actuator/health) |
 
-* **Especificación OpenAPI (Contrato JSON Schema):** `http://localhost:8089/v3/api-docs` (o `/v3/api-docs` en los dominios de PROD y QA).
+* **Especificación OpenAPI (Contrato JSON Schema):** `http://localhost:8090/v3/api-docs` (o `/v3/api-docs` en los dominios de PROD y QA).
 
 
 <div align="center">
@@ -349,7 +349,7 @@ mvn clean spring-boot:run -Dspring-boot.run.profiles=dev
 ### Comprobación de Salud (Health Check)
 
 ```bash
-curl -s http://localhost:8089/actuator/health | jq .
+curl -s http://localhost:8090/actuator/health | jq .
 # Esperado: {"status":"UP","components":{"db":{"status":"UP"},"rabbit":{"status":"UP"}}}
 ```
 
@@ -385,7 +385,7 @@ Todas las configuraciones sensibles y dependientes de entorno se externalizan me
 
 | Variable                   | Descripción                                 | Valor por Defecto (`dev`) | Requerido en Prod |
 | :------------------------- | :------------------------------------------- | :-------------------------- | :---------------: |
-| `SERVER_PORT`            | Puerto de escucha HTTP del microservicio     | `8089`                    |        Sí        |
+| `SERVER_PORT`            | Puerto de escucha HTTP del microservicio     | `8090`                    |        Sí        |
 | `SPRING_PROFILES_ACTIVE` | Perfil de configuración Spring Boot activo  | `dev`                     |        Sí        |
 | `DB_HOST`                | Hostname o IP del servidor PostgreSQL        | `localhost`               |        Sí        |
 | `DB_PORT`                | Puerto de conexión a PostgreSQL             | `5432`                    |        Sí        |
@@ -408,7 +408,7 @@ Todas las configuraciones sensibles y dependientes de entorno se externalizan me
 # ==============================================================================
 # STYLERADAR · VARIABLES DE ENTORNO LOCALES (.env)
 # ==============================================================================
-SERVER_PORT=8089
+SERVER_PORT=8090
 SPRING_PROFILES_ACTIVE=dev
 
 # Persistencia PostgreSQL
