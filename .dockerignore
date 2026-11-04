@@ -1,0 +1,24 @@
+# Ignorar archivos de control de versiones
+.git
+.gitignore
+
+# Ignorar archivos del IDE
+.idea
+*.iml
+.vscode
+
+# Ignorar archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar el directorio de compilación de Maven (¡Muy importante!)
+target/
+
+# Ignorar archivos de configuración locales y secretos
+.env
+*.log
+
+# Ignorar documentación (opcional, pero ayuda a reducir el contexto)
+docs/
+*.md
+!README.md
