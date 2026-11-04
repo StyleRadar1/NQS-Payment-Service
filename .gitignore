@@ -58,3 +58,4 @@ build/
 .vscode/
 
 .env.example
+.env
