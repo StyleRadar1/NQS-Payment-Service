@@ -12,7 +12,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 # Copia solo el JAR construido
 COPY --from=builder /app/target/*.jar app.jar
-# Expone el puerto definido en la matriz (8090)
-EXPOSE 8090
+# Expone el puerto definido en la matriz (8400)
+EXPOSE 8400
 # Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]

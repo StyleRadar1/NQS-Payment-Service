@@ -28,7 +28,7 @@ services:
     build: .
     container_name: sr-ms-pagos
     ports:
-      - "8090:8090"
+      - "8400:8400"
     env_file:
       - .env
     environment:
