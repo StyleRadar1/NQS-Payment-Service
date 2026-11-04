@@ -1,1 +1,21 @@
+server:
+  port: 8090
 
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/styleradar_pagos
+    username: sr_user
+    password: sr_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    redis:
+      host: localhost
+      port: 6379
