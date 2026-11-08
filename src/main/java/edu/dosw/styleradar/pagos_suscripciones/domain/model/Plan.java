@@ -7,7 +7,7 @@ public class Plan {
     private final String nombre;
     private final TipoSuscriptor tipoSuscriptor;
     private final Monto precio;
-    private final Map<String, Object> limites; // Ej: {"wishlist_max": 20}
+    private final Map<String, Object> limites; // Ej: {"max_wishlist": 20, "probador_foto": true}
     private boolean activo;
 
     public Plan(Long id, String nombre, TipoSuscriptor tipoSuscriptor, Monto precio, Map<String, Object> limites) {
@@ -18,5 +18,16 @@ public class Plan {
         this.limites = limites;
         this.activo = true;
     }
-    // Getters y lógica de desactivación...
+
+    public void desactivar() {
+        this.activo = false;
+    }
+
+    // Getters
+    public Long getId() { return id; }
+    public String getNombre() { return nombre; }
+    public TipoSuscriptor getTipoSuscriptor() { return tipoSuscriptor; }
+    public Monto getPrecio() { return precio; }
+    public Map<String, Object> getLimites() { return limites; }
+    public boolean isActivo() { return activo; }
 }

@@ -6,4 +6,5 @@ import java.util.Optional;
 public interface SuscripcionRepositoryPort {
     Suscripcion guardar(Suscripcion suscripcion);
     Optional<Suscripcion> buscarPorId(Long id);
+    Optional<Suscripcion> buscarPorSuscriptorId(String suscriptorId);
 }
