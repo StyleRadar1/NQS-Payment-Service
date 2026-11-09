@@ -16,10 +16,10 @@ CREATE TABLE suscripciones (
     suscriptor_id VARCHAR(50) NOT NULL,
     tipo_suscriptor VARCHAR(20) NOT NULL,
     estado VARCHAR(30) NOT NULL,
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NOT NULL,
+    fecha_inicio DATE,
+    fecha_fin DATE,
     auto_renovacion BOOLEAN NOT NULL DEFAULT TRUE,
-    dias_periodo_gracia INT NOT NULL DEFAULT 3,
+    preapproval_id_mp VARCHAR(100),
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_plan FOREIGN KEY (plan_id) REFERENCES planes(id) ON DELETE RESTRICT
 );
