@@ -2,9 +2,13 @@ package edu.dosw.styleradar.pagos_suscripciones.domain.port.out;
 
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface OrdenPagoRepositoryPort {
     OrdenPago guardar(OrdenPago orden);
-    java.util.Optional<OrdenPago> buscarPorId(Long id);
-    java.util.Optional<OrdenPago> buscarPorIdPagoExterno(String idPagoExterno);
-    java.util.List<OrdenPago> buscarPorSuscripcionId(Long suscripcionId);
+    Optional<OrdenPago> buscarPorId(Long id);
+    Optional<OrdenPago> buscarPorIdPagoExterno(String idPagoExterno);
+    boolean existePorIdPagoExterno(String idPagoExterno);
+    List<OrdenPago> buscarPorSuscripcionId(Long suscripcionId);
 }

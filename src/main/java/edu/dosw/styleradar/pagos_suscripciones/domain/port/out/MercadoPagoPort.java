@@ -6,12 +6,13 @@ import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.Suscripcion;
 
 public interface MercadoPagoPort {
-    // Retorna el init_point para redirigir al usuario
-    Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion);
-    // Consulta el estado de un pago
-    Map<String, String> consultarPago(String idPagoExterno);
-    // Cancela una suscripción recurrente en MP
+    /**
+     * Crea una preferencia de pago en Mercado Pago.
+     * @return Un mapa con el 'init_point' y el 'preapproval_id'.
+     */
+    Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer);
+
     void cancelarPreapproval(String preapprovalId);
-    // Reembolsa un pago
+
     void reembolsarPago(String idPagoExterno, String monto);
 }
