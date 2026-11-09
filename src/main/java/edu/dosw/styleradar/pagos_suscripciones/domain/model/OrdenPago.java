@@ -8,7 +8,7 @@ public class OrdenPago {
     private final Long suscripcionId;
     private final Monto monto;
     private EstadoPago estado;
-    private String idPagoExterno; // ID de Mercado Pago
+    private String idPagoExterno;
     private Monto montoReembolsado;
     private String motivoReembolso;
     private final LocalDateTime fechaCreacion;
@@ -19,8 +19,12 @@ public class OrdenPago {
         this.monto = monto;
         this.idPagoExterno = idPagoExterno;
         this.estado = EstadoPago.PENDIENTE;
-        this.montoReembolsado = new Monto(java.math.BigDecimal.ZERO, monto.moneda());
+        this.montoReembolsado = new Monto(BigDecimal.ZERO, monto.moneda());
         this.fechaCreacion = LocalDateTime.now();
+    }
+
+    public void actualizarEstado(String nuevoEstado) {
+        this.estado = EstadoPago.valueOf(nuevoEstado.toUpperCase());
     }
 
     public void aprobar() {
@@ -43,10 +47,9 @@ public class OrdenPago {
         }
         this.montoReembolsado = montoReembolso;
         this.motivoReembolso = motivo;
-        this.estado = EstadoPago.REEMBOLSADO; // Si es parcial, tal vez debería quedar APROBADO pero con montoReembolsado > 0
+        this.estado = EstadoPago.REEMBOLSADO;
     }
 
-    // Getters
     public Long getId() { return id; }
     public Long getSuscripcionId() { return suscripcionId; }
     public Monto getMonto() { return monto; }
