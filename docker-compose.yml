@@ -1,8 +1,8 @@
+version: '3.8'
 services:
-  # Base de datos PostgreSQL para Pagos
-  postgres-pagos:
-    image: postgres:16-alpine
-    container_name: sr-postgres-pagos
+  postgres:
+    image: postgres:16
+    container_name: styleradar-postgres
     environment:
       POSTGRES_DB: styleradar_pagos
       POSTGRES_USER: sr_user
@@ -10,43 +10,23 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata_pagos:/var/lib/postgresql/data
-    networks:
-      - sr-network
+      - pgdata:/var/lib/postgresql/data
 
-  # Redis para Locks de Idempotencia
-  redis-pagos:
+  redis:
     image: redis:7-alpine
-    container_name: sr-redis-pagos
+    container_name: styleradar-redis
     ports:
       - "6379:6379"
-    networks:
-      - sr-network
 
-  # Microservicio de Pagos
-  ms-pagos-suscripciones:
-    build: .
-    container_name: sr-ms-pagos
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: styleradar-rabbitmq
     ports:
-      - "8400:8400"
-    env_file:
-      - .env
+      - "5672:5672"
+      - "15672:15672"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-pagos:5432/styleradar_pagos
-      - SPRING_DATASOURCE_USERNAME=sr_user
-      - SPRING_DATASOURCE_PASSWORD=sr_password
-      - SPRING_DATA_REDIS_HOST=redis-pagos
-      - SPRING_DATA_REDIS_PORT=6379
-      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN} # Se inyecta desde .env
-    depends_on:
-      - postgres-pagos
-      - redis-pagos
-    networks:
-      - sr-network
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 volumes:
-  pgdata_pagos:
-
-networks:
-  sr-network:
-    driver: bridge
+  pgdata:
