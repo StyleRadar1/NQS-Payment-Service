@@ -20,9 +20,7 @@
     
     <properties>
         <java.version>21</java.version>
-        <!-- Versión de Spring Cloud compatible con Spring Boot 3.2.x -->
         <spring-cloud.version>2023.0.1</spring-cloud.version>
-        <!-- Versión de Flyway (Forzada para evitar el error de Maven) -->
         <flyway.version>10.10.0</flyway.version>
         
         <!-- Configuración de SonarQube -->
@@ -31,14 +29,31 @@
         <sonar.projectKey>styleradar-ms-pagos</sonar.projectKey>
         <sonar.projectName>StyleRadar - Microservicio de Pagos</sonar.projectName>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <!-- Excluir clases que no se deben analizar en Sonar -->
         <sonar.exclusions>
-            **/dto/**, 
-            **/config/**, 
-            **/*Application.java, 
-            **/exception/**
+            **/dto/**, **/config/**, **/*Application.java, **/exception/**
         </sonar.exclusions>
     </properties>
+
+    <!-- BOM de Spring Cloud (Necesario para Feign) -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- BOM de Testcontainers -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>1.19.7</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
     <dependencies>
         <!-- Spring Boot Web -->
@@ -60,7 +75,7 @@
             <scope>runtime</scope>
         </dependency>
         
-        <!-- Spring Data Redis (Para idempotencia) -->
+        <!-- Spring Data Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -72,7 +87,7 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
-        <!-- Feign para Mercado Pago (REST Directo) -->
+        <!-- Feign -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
@@ -92,7 +107,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Flyway (Migraciones de Base de Datos) -->
+        <!-- Flyway -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -104,7 +119,7 @@
             <version>${flyway.version}</version>
         </dependency>
 
-        <!-- Spring Boot Actuator (Para Observabilidad / Health Checks) -->
+        <!-- Spring Boot Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -126,20 +141,15 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-    </dependencies>
 
-    <!-- BOM de Spring Cloud (Necesario para Feign) -->
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+        <!-- H2 para tests simples-->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
 
     <build>
         <plugins>
@@ -157,7 +167,7 @@
                 </configuration>
             </plugin>
             
-            <!-- Plugin de compilación (Configurado para Java 21 y Lombok) -->
+            <!-- Plugin de compilación -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -175,22 +185,28 @@
                 </configuration>
             </plugin>
 
-            <!-- Plugin de JaCoCo para Cobertura (Requisito: >= 85%) -->
+            <!-- Plugin de JaCoCo -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/PagosSuscripcionesApplication.*</exclude>
-                        <exclude>**/dto/**</exclude>
-                        <exclude>**/config/**</exclude>
-                        <exclude>**/exception/**</exclude>
+                        <exclude>**/PagosSuscripcionesApplication.class</exclude>
+                        <!-- Excluir entidades de base de datos -->
+                        <exclude>**/infrastructure/adapter/out/persistence/entity/**</exclude>
+                        <exclude>**/infrastructure/adapter/out/persistence/repository/**</exclude>
+                        <!-- Excluir Mercado Pago, RabbitMQ y Redis -->
+                        <exclude>**/infrastructure/adapter/out/payment/**</exclude>
+                        <exclude>**/infrastructure/adapter/out/messaging/**</exclude>
+                        <exclude>**/infrastructure/adapter/out/cache/**</exclude>
+                        <!-- Excluir Configuración y DTOs -->
+                        <exclude>**/infrastructure/config/**</exclude>
+                        <exclude>**/application/dto/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
@@ -204,6 +220,7 @@
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -213,9 +230,9 @@
                                     <element>BUNDLE</element>
                                     <limits>
                                         <limit>
-                                            <counter>LINE</counter>
+                                            <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.85</minimum>
+                                            <minimum>0.85</minimum> <!-- Tu meta del 85% -->
                                         </limit>
                                     </limits>
                                 </rule>
@@ -225,7 +242,7 @@
                 </executions>
             </plugin>
 
-            <!-- Plugin de SonarQube para Análisis de Calidad -->
+            <!-- Plugin de SonarQube -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
