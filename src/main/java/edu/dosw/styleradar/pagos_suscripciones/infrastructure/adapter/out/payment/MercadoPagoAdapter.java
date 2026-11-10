@@ -5,12 +5,14 @@ import edu.dosw.styleradar.pagos_suscripciones.domain.model.Suscripcion;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.MercadoPagoPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@Profile("!dev")
 @RequiredArgsConstructor
 public class MercadoPagoAdapter implements MercadoPagoPort {
 

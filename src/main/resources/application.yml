@@ -2,6 +2,8 @@ server:
   port: 8400
 
 spring:
+  profiles:
+    active: dev
   application:
     name: ms-pagos-suscripciones
   datasource:
