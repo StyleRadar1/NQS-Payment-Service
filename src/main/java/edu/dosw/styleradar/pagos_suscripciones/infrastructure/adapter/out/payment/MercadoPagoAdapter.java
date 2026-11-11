@@ -27,19 +27,21 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
         return "Bearer " + accessToken;
     }
 
-    @Override
+        @Override
     public Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer) {
         Map<String, Object> request = new HashMap<>();
         request.put("reason", "Suscripción StyleRadar - Plan " + suscripcion.getPlanId());
+        request.put("external_reference", suscripcion.getId().toString());
         request.put("payer_email", emailPayer);
+        request.put("back_url", "https://styleradar.com/suscripcion/resultado");
+        request.put("status", "pending");
+        
         request.put("auto_recurring", Map.of(
                 "frequency", 1,
                 "frequency_type", "months",
                 "transaction_amount", orden.getMonto().valor(),
                 "currency_id", orden.getMonto().moneda()
         ));
-        request.put("back_url", "https://styleradar.com/suscripcion/resultado");
-        request.put("external_reference", suscripcion.getId().toString());
 
         Map<String, Object> response = feignClient.crearPreapproval(getAuthHeader(), request);
         
