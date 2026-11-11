@@ -1,6 +1,7 @@
 package edu.dosw.styleradar.pagos_suscripciones.application.usecase;
 
 import edu.dosw.styleradar.pagos_suscripciones.domain.exception.PaymentProcessingException;
+import edu.dosw.styleradar.pagos_suscripciones.domain.model.EstadoPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.Monto;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.in.PagoPort;
@@ -31,12 +32,16 @@ public class ReembolsarPagoUseCaseImpl implements PagoPort {
         OrdenPago orden = ordenPagoRepository.buscarPorId(ordenPagoId)
                 .orElseThrow(() -> new PaymentProcessingException("Orden de pago no encontrada"));
 
+        // Si la orden no está aprobada, no se puede reembolsar (esto es correcto)
+        if (orden.getEstado() != EstadoPago.APROBADO && orden.getEstado() != EstadoPago.REEMBOLSADO) {
+             throw new IllegalStateException("Solo se reembolsan pagos aprobados");
+        }
+
         Monto montoReembolso = new Monto(new BigDecimal(montoReembolsoStr), orden.getMonto().moneda());
         
-        // Lógica de dominio
+        // Lógica de dominio (asegúrate de tener esto en OrdenPago.java)
         orden.reembolsar(montoReembolso, motivo);
         
-        // Llamada a pasarela (Mock o Real)
         mercadoPagoPort.reembolsarPago(orden.getIdPagoExterno(), montoReembolsoStr);
         
         ordenPagoRepository.guardar(orden);

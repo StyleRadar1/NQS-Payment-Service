@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -46,7 +45,7 @@ public class OrdenPagoPersistenceAdapter implements OrdenPagoRepositoryPort {
         return repository.findAll().stream()
                 .filter(o -> o.getSuscripcionId().equals(suscripcionId))
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private OrdenPagoEntity toEntity(OrdenPago domain) {
@@ -79,6 +78,6 @@ public class OrdenPagoPersistenceAdapter implements OrdenPagoRepositoryPort {
         // Asumiendo que tienes un query en tu JpaRepository que hace el JOIN
         return repository.findBySuscriptorId(suscriptorId).stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

@@ -23,19 +23,25 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
     @Value("${mercadopago.access-token}")
     private String accessToken;
 
+    @Value("${mercadopago.webhook-url}")
+    private String webhookUrl;
+
     private String getAuthHeader() {
         return "Bearer " + accessToken;
     }
 
-        @Override
+    @Override
     public Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer) {
         Map<String, Object> request = new HashMap<>();
         request.put("reason", "Suscripción StyleRadar - Plan " + suscripcion.getPlanId());
         request.put("external_reference", suscripcion.getId().toString());
         request.put("payer_email", emailPayer);
-        request.put("back_url", "https://styleradar.com/suscripcion/resultado");
         request.put("status", "pending");
         
+        // ¡ESTA ES LA LÍNEA MÁGICA QUE PIDE EL PROFESOR!
+        request.put("notification_url", webhookUrl);
+
+        request.put("back_url", "https://styleradar.com/suscripcion/resultado");
         request.put("auto_recurring", Map.of(
                 "frequency", 1,
                 "frequency_type", "months",

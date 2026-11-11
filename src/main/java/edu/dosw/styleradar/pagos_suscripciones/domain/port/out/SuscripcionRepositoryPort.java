@@ -11,4 +11,5 @@ public interface SuscripcionRepositoryPort {
     Optional<Suscripcion> buscarPorId(Long id);
     Optional<Suscripcion> buscarPorSuscriptorId(String suscriptorId);
     List<Suscripcion> buscarVencidas(LocalDate fecha);
+    Optional<Suscripcion> buscarPorPreapprovalId(String preapprovalId);
 }

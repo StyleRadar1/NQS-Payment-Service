@@ -66,7 +66,12 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
         suscripcionRepository.guardar(suscripcion);
 
         if (suscripcion.getPreapprovalIdMp() != null) {
-            mercadoPagoPort.cancelarPreapproval(suscripcion.getPreapprovalIdMp());
+            try {
+                mercadoPagoPort.cancelarPreapproval(suscripcion.getPreapprovalIdMp());
+            } catch (Exception e) {
+                // Si MP falla, no rompemos la transacción local. Solo logueamos el error.
+                log.warn("No se pudo cancelar el Preapproval en Mercado Pago: {}", e.getMessage());
+            }
         }
         log.info("Renovación cancelada para suscriptor: {}", idSuscriptor);
     }

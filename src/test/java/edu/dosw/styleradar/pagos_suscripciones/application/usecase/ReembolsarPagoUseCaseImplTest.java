@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,7 +35,7 @@ class ReembolsarPagoUseCaseImplTest {
 
         useCase.reembolsarPago(1L, "50", "Motivo test");
 
-        verify(mercadoPagoPort).reembolsarPago(eq("MP-1"), eq("50"));
+        verify(mercadoPagoPort).reembolsarPago("MP-1", "50");
         verify(ordenPagoRepository).guardar(orden);
         assertEquals(EstadoPago.REEMBOLSADO, orden.getEstado());
     }

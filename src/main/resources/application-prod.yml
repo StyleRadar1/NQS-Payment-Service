@@ -15,3 +15,4 @@ mercadopago:
   webhook-secret: ${MP_WEBHOOK_SECRET}
   api:
     url: https://api.mercadopago.com
+  webhook-url: https://extradite-faceted-magnifier.ngrok-free.dev/api/v1/webhooks/mercadopago

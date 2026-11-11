@@ -7,7 +7,7 @@ public class Plan {
     private final String nombre;
     private final TipoSuscriptor tipoSuscriptor;
     private final Monto precio;
-    private final Map<String, Object> limites; // Ej: {"max_wishlist": 20, "probador_foto": true}
+    private final Map<String, Object> limites;
     private boolean activo;
 
     public Plan(Long id, String nombre, TipoSuscriptor tipoSuscriptor, Monto precio, Map<String, Object> limites) {

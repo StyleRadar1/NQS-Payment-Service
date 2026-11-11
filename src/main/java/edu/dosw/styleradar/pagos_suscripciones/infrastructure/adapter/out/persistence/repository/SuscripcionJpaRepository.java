@@ -13,4 +13,5 @@ public interface SuscripcionJpaRepository extends JpaRepository<SuscripcionEntit
     Optional<SuscripcionEntity> findBySuscriptorId(String suscriptorId);
     @Query("SELECT s FROM SuscripcionEntity s WHERE s.fechaFin < :fecha AND s.estado = 'ACTIVA'")
     List<SuscripcionEntity> findVencidas(@Param("fecha") LocalDate fecha);
+    Optional<SuscripcionEntity> findByPreapprovalIdMp(String preapprovalIdMp);
 }

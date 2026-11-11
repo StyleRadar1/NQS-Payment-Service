@@ -72,6 +72,11 @@ public class SuscripcionPersistenceAdapter implements SuscripcionRepositoryPort 
     public List<Suscripcion> buscarVencidas(LocalDate fecha) {
         return repository.findVencidas(fecha).stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Override
+    public Optional<Suscripcion> buscarPorPreapprovalId(String preapprovalId) {
+        return repository.findByPreapprovalIdMp(preapprovalId).map(this::toDomain);
     }
 }

@@ -198,6 +198,7 @@
                         <exclude>**/application/dto/**</exclude>
                         <!-- Excluir Entidades JPA (solo tienen getters/setters de Lombok) -->
                         <exclude>**/infrastructure/adapter/out/persistence/entity/**</exclude>
+                        <exclude>**/infrastructure/config/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>

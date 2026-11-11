@@ -36,7 +36,7 @@ class SuscripcionControllerTest {
                 "USER-1", 2L, "USUARIO", "test@test.com"
         );
 
-        when(suscripcionPort.iniciarSuscripcion(eq("USER-1"), eq(2L), eq(TipoSuscriptor.USUARIO), eq("test@test.com")))
+        when(suscripcionPort.iniciarSuscripcion("USER-1", 2L, TipoSuscriptor.USUARIO, "test@test.com"))
                 .thenReturn("https://mercadopago.com/checkout");
 
         mockMvc.perform(post("/api/v1/suscripciones/iniciar")

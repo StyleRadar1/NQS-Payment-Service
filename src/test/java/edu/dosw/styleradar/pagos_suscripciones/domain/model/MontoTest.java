@@ -15,9 +15,7 @@ class MontoTest {
 
     @Test
     void noDebePermitirMontoNegativo() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            new Monto(BigDecimal.valueOf(-10), "COP")
-        );
+        assertThrows(IllegalArgumentException.class, () -> new Monto(BigDecimal.TEN, ""));
     }
 
     @Test

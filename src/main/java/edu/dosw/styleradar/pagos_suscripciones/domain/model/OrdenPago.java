@@ -38,16 +38,25 @@ public class OrdenPago {
         this.estado = EstadoPago.RECHAZADO;
     }
 
-    public void reembolsar(Monto montoReembolso, String motivo) {
-        if (this.estado != EstadoPago.APROBADO) {
+        public void reembolsar(Monto montoReembolso, String motivo) {
+        if (this.estado != EstadoPago.APROBADO && this.estado != EstadoPago.REEMBOLSADO) {
             throw new IllegalStateException("Solo se reembolsan pagos aprobados");
         }
-        if (montoReembolso.valor().compareTo(this.monto.valor()) > 0) {
-            throw new IllegalArgumentException("El monto a reembolsar supera el monto original");
+        
+        // Sumar el nuevo monto al ya reembolsado
+        Monto nuevoTotalReembolsado = this.montoReembolsado.sumar(montoReembolso);
+        
+        if (nuevoTotalReembolsado.valor().compareTo(this.monto.valor()) > 0) {
+            throw new IllegalArgumentException("El monto total a reembolsar supera el monto original");
         }
-        this.montoReembolsado = montoReembolso;
+        
+        this.montoReembolsado = nuevoTotalReembolsado;
         this.motivoReembolso = motivo;
-        this.estado = EstadoPago.REEMBOLSADO;
+        
+        // Si ya se reembolsó el 100%, cambia el estado
+        if (this.montoReembolsado.valor().compareTo(this.monto.valor()) == 0) {
+            this.estado = EstadoPago.REEMBOLSADO;
+        }
     }
 
     public Long getId() { return id; }
