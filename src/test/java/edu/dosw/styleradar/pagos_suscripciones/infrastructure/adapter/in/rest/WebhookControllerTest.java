@@ -23,7 +23,12 @@ class WebhookControllerTest {
 
     @Test
     void debeRecibirWebhookDeMercadoPago() throws Exception {
-        String payload = "{\"data.id\": \"MP-123\", \"action\": \"APPROVED\", \"type\": \"payment\"}";
+        // CORREGIDO: El JSON ahora tiene la estructura anidada correcta
+        String payload = "{"
+                + "\"data\": {\"id\": \"MP-123\"},"
+                + "\"action\": \"APPROVED\","
+                + "\"type\": \"payment\""
+                + "}";
 
         mockMvc.perform(post("/api/v1/webhooks/mercadopago")
                 .header("x-signature", "dummy-signature")

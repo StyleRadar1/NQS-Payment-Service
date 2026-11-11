@@ -27,7 +27,10 @@ public class Suscripcion {
         this.estado = EstadoSuscripcion.ACTIVA;
         this.fechaInicio = LocalDate.now();
         this.fechaFin = nuevaFechaFin;
+        // Si había un cambio de plan programado, se aplica al renovar
+        aplicarCambioPlan();
     }
+
 
     public void suspenderPorFaltaDePago() {
         this.estado = EstadoSuscripcion.SUSPENDIDA;
@@ -49,6 +52,12 @@ public class Suscripcion {
         }
     }
 
+    public void revertirAPlanGratuito(Long planGratuitoId) {
+        this.planId = planGratuitoId;
+        this.estado = EstadoSuscripcion.SUSPENDIDA;
+        this.autoRenovacion = false;
+    }
+    
     public boolean estaVencida() {
         return this.fechaFin != null && LocalDate.now().isAfter(this.fechaFin);
     }

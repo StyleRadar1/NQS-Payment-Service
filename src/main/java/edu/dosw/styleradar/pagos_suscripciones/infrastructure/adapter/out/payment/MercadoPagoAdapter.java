@@ -4,6 +4,7 @@ import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.Suscripcion;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.MercadoPagoPort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Component
 @Profile("!dev")
 @RequiredArgsConstructor
@@ -57,7 +59,8 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
 
     @Override
     public void reembolsarPago(String idPagoExterno, String monto) {
-        // La implementación real debe llamar al endpoint de reembolsos de MP
-        // Ejemplo: feignClient.reembolsarPago(getAuthHeader(), idPagoExterno, Map.of("amount", monto));
+        log.info("Solicitando reembolso real a Mercado Pago para pago: {}", idPagoExterno);
+        Map<String, Object> request = Map.of("amount", Double.parseDouble(monto));
+        feignClient.reembolsarPago(getAuthHeader(), idPagoExterno, request);
     }
 }

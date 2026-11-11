@@ -19,4 +19,6 @@ public interface SuscripcionPort {
      * Consulta una suscripción por el ID del suscriptor.
      */
     Suscripcion consultarSuscripcion(String idSuscriptor);
+    
+    void programarCambioPlan(String idSuscriptor, Long nuevoPlanId);
 }

@@ -76,4 +76,21 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
         return suscripcionRepository.buscarPorSuscriptorId(idSuscriptor)
                 .orElseThrow(() -> new SuscripcionNoEncontradaException("No se encontró suscripción para: " + idSuscriptor));
     }
+
+    @Override
+    @Transactional
+    public void programarCambioPlan(String idSuscriptor, Long nuevoPlanId) {
+        log.info("Programando cambio de plan para suscriptor: {} al plan: {}", idSuscriptor, nuevoPlanId);
+        
+        if (planRepository.buscarPorId(nuevoPlanId).isEmpty()) {
+            throw new PlanNotFoundException("El nuevo plan no existe");
+        }
+
+        Suscripcion suscripcion = suscripcionRepository.buscarPorSuscriptorId(idSuscriptor)
+                .orElseThrow(() -> new SuscripcionNoEncontradaException("Suscripción no encontrada"));
+
+        suscripcion.programarCambioPlan(nuevoPlanId);
+        suscripcionRepository.guardar(suscripcion);
+        log.info("Cambio de plan programado exitosamente.");
+    }
 }

@@ -71,4 +71,13 @@ public class SuscripcionController {
             @Schema(description = "Tipo de suscriptor", example = "USUARIO", allowableValues = {"USUARIO", "ALMACEN"}) String tipoSuscriptor, 
             @Schema(description = "Correo del pagador para Mercado Pago", example = "test_user@test.com") String emailPayer
     ) {}
+
+    @Operation(summary = "Programar cambio de plan")
+    @PutMapping("/{suscriptorId}/cambiar-plan")
+    public ResponseEntity<Void> cambiarPlan(
+            @PathVariable String suscriptorId,
+            @RequestParam Long nuevoPlanId) {
+        suscripcionPort.programarCambioPlan(suscriptorId, nuevoPlanId);
+        return ResponseEntity.ok().build();
+    }
 }

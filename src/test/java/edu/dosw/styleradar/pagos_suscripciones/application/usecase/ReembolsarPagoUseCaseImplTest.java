@@ -1,7 +1,7 @@
 package edu.dosw.styleradar.pagos_suscripciones.application.usecase;
 
-import edu.dosw.styleradar.pagos_suscripciones.domain.model.Monto;
-import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
+import edu.dosw.styleradar.pagos_suscripciones.domain.exception.PaymentProcessingException;
+import edu.dosw.styleradar.pagos_suscripciones.domain.model.*;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.MercadoPagoPort;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.OrdenPagoRepositoryPort;
 import org.junit.jupiter.api.Test;
@@ -11,35 +11,47 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReembolsarPagoUseCaseImplTest {
 
-    @Mock private OrdenPagoRepositoryPort repository;
+    @Mock private OrdenPagoRepositoryPort ordenPagoRepository;
     @Mock private MercadoPagoPort mercadoPagoPort;
     @InjectMocks private ReembolsarPagoUseCaseImpl useCase;
 
     @Test
     void debeReembolsarCorrectamente() {
-        OrdenPago orden = new OrdenPago(1L, 1L, new Monto(BigDecimal.TEN, "COP"), "MP-123");
+        OrdenPago orden = new OrdenPago(1L, 1L, new Monto(new BigDecimal("100"), "COP"), "MP-1");
         orden.aprobar();
-        
-        when(repository.buscarPorId(1L)).thenReturn(Optional.of(orden));
+        when(ordenPagoRepository.buscarPorId(1L)).thenReturn(Optional.of(orden));
 
-        useCase.reembolsarPago(1L, "Motivo test");
+        useCase.reembolsarPago(1L, "50", "Motivo test");
 
-        verify(mercadoPagoPort).reembolsarPago(eq("MP-123"), anyString());
-        verify(repository).guardar(orden);
+        verify(mercadoPagoPort).reembolsarPago(eq("MP-1"), eq("50"));
+        verify(ordenPagoRepository).guardar(orden);
+        assertEquals(EstadoPago.REEMBOLSADO, orden.getEstado());
     }
 
     @Test
     void debeLanzarErrorSiOrdenNoExiste() {
-        when(repository.buscarPorId(1L)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> useCase.reembolsarPago(1L, "Motivo"));
+        when(ordenPagoRepository.buscarPorId(1L)).thenReturn(Optional.empty());
+        assertThrows(PaymentProcessingException.class, () -> useCase.reembolsarPago(1L, "50", "Motivo"));
+    }
+
+    @Test
+    void debeConsultarHistorialPagos() {
+        when(ordenPagoRepository.buscarPorSuscriptorId("USER-1")).thenReturn(List.of());
+        List<OrdenPago> historial = useCase.consultarHistorialPagos("USER-1");
+        assertTrue(historial.isEmpty());
+        verify(ordenPagoRepository).buscarPorSuscriptorId("USER-1");
     }
 }

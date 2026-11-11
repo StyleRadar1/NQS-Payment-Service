@@ -29,4 +29,11 @@ public interface MercadoPagoFeignClient {
             @RequestHeader("Authorization") String authorization,
             @PathVariable("id") String id
     );
+
+    @PostMapping("/v1/payments/{id}/refunds")
+    Map<String, Object> reembolsarPago(
+            @RequestHeader("Authorization") String authorization,
+            @PathVariable("id") String id,
+            @RequestBody Map<String, Object> request
+    );
 }

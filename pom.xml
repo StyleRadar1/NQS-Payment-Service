@@ -192,17 +192,12 @@
                 <version>0.8.11</version>
                 <configuration>
                     <excludes>
+                        <!-- Excluir la clase principal -->
                         <exclude>**/PagosSuscripcionesApplication.class</exclude>
-                        <!-- Excluir entidades de base de datos -->
-                        <exclude>**/infrastructure/adapter/out/persistence/entity/**</exclude>
-                        <exclude>**/infrastructure/adapter/out/persistence/repository/**</exclude>
-                        <!-- Excluir Mercado Pago, RabbitMQ y Redis -->
-                        <exclude>**/infrastructure/adapter/out/payment/**</exclude>
-                        <exclude>**/infrastructure/adapter/out/messaging/**</exclude>
-                        <exclude>**/infrastructure/adapter/out/cache/**</exclude>
-                        <!-- Excluir Configuración y DTOs -->
-                        <exclude>**/infrastructure/config/**</exclude>
+                        <!-- Excluir DTOs (solo tienen getters/setters de Lombok) -->
                         <exclude>**/application/dto/**</exclude>
+                        <!-- Excluir Entidades JPA (solo tienen getters/setters de Lombok) -->
+                        <exclude>**/infrastructure/adapter/out/persistence/entity/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -232,7 +227,7 @@
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.85</minimum> <!-- Tu meta del 85% -->
+                                            <minimum>0.85</minimum> <!-- La meta del 85% -->
                                         </limit>
                                     </limits>
                                 </rule>

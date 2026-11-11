@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -64,5 +67,11 @@ public class SuscripcionPersistenceAdapter implements SuscripcionRepositoryPort 
         }
         domain.setPreapprovalIdMp(entity.getPreapprovalIdMp());
         return domain;
+    }
+    @Override
+    public List<Suscripcion> buscarVencidas(LocalDate fecha) {
+        return repository.findVencidas(fecha).stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
     }
 }

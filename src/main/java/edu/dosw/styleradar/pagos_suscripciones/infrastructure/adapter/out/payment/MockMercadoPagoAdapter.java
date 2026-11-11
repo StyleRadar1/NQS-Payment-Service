@@ -30,6 +30,6 @@ public class MockMercadoPagoAdapter implements MercadoPagoPort {
 
     @Override
     public void reembolsarPago(String idPagoExterno, String monto) {
-        log.info("🧪 MOCK: Simulando reembolso del pago {} por un monto de {}", idPagoExterno, monto);
+        log.info("🧪 MOCK: Simulando reembolso a Mercado Pago de ${} para el pago {}", monto, idPagoExterno);
     }
 }

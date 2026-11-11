@@ -73,4 +73,12 @@ public class OrdenPagoPersistenceAdapter implements OrdenPagoRepositoryPort {
         domain.actualizarEstado(entity.getEstado().name());
         return domain;
     }
+
+    @Override
+    public List<OrdenPago> buscarPorSuscriptorId(String suscriptorId) {
+        // Asumiendo que tienes un query en tu JpaRepository que hace el JOIN
+        return repository.findBySuscriptorId(suscriptorId).stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
 }
