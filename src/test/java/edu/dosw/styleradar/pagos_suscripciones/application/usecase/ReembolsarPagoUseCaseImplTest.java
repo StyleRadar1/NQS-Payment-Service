@@ -81,6 +81,7 @@ class ReembolsarPagoUseCaseImplTest {
         Suscripcion s = new Suscripcion(100L, "U", TipoSuscriptor.USUARIO, 2L);
         s.rehidratar(EstadoSuscripcion.PENDIENTE, null, null, true, null, null);
         when(ordenPagoRepository.buscarPorId(1L)).thenReturn(Optional.of(o));
+        when(ordenPagoRepository.guardar(any(OrdenPago.class))).thenReturn(new OrdenPago(2L, 100L, new Monto(BigDecimal.TEN, "COP"), null));
         when(suscripcionRepository.buscarPorId(100L)).thenReturn(Optional.of(s));
         when(mercadoPagoPort.crearPreferenciaPago(any(), any(), anyString()))
             .thenReturn(java.util.Map.of("init_point", "https://mp.com/r", "preapproval_id", "PRE-N"));

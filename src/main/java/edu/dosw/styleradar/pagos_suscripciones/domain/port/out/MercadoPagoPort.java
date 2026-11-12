@@ -14,4 +14,6 @@ public interface MercadoPagoPort {
     void reembolsarPago(String idPagoExterno, String monto);
     /** Consulta el estado real (approved/rejected/pending/refunded) del pago en MP. */
     String consultarEstadoPago(String idPagoExterno);
+
+    Map<String, Object> consultarPago(String idPagoExterno);
 }

@@ -32,7 +32,7 @@ spring:
     virtual-host: ${RABBITMQ_VHOST:/}
     ssl:
       enabled: ${RABBITMQ_SSL:true}
-      trust-store: file:/app/rabbitmq-truststore.jks
+      trust-store: classpath:rabbitmq-truststore.jks
       trust-store-password: ${RABBITMQ_TRUSTSTORE_PASSWORD:changeit}
       trust-store-type: JKS
       verify-hostname: true

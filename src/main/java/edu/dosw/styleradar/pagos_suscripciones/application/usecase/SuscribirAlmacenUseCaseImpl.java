@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -40,14 +39,12 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
             throw new IllegalArgumentException("El plan seleccionado no está disponible.");
         }
 
-        // ADR 09: mismo TipoSuscriptor
         if (plan.getTipoSuscriptor() != tipoSuscriptor) {
             throw new IllegalArgumentException(
                 "El plan '" + plan.getNombre() + "' es de tipo " + plan.getTipoSuscriptor()
                 + " y el suscriptor es de tipo " + tipoSuscriptor + ".");
         }
 
-        // SR-RF-67 FA-02 / SR-RF-100 RN-02: no duplicar
         Optional<Suscripcion> existente = suscripcionRepository.buscarPorSuscriptorId(idSuscriptor);
         if (existente.isPresent()) {
             Suscripcion ex = existente.get();
@@ -61,14 +58,13 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
             }
         }
 
-        // Crear Suscripción + Orden
         Suscripcion suscripcion = new Suscripcion(null, idSuscriptor, tipoSuscriptor, idPlan);
         suscripcion.setEstado(EstadoSuscripcion.PENDIENTE);
         suscripcion = suscripcionRepository.guardar(suscripcion);
 
-        String refExterna = UUID.randomUUID().toString();
-        OrdenPago orden = new OrdenPago(null, suscripcion.getId(), plan.getPrecio(), refExterna);
-        ordenPagoRepository.guardar(orden);
+        // GUARDAMOS PRIMERO PARA OBTENER EL ID REAL
+        OrdenPago orden = new OrdenPago(null, suscripcion.getId(), plan.getPrecio(), null);
+        orden = ordenPagoRepository.guardar(orden);
 
         Map<String, String> mp = mercadoPagoPort.crearPreferenciaPago(orden, suscripcion, emailPayer);
 
@@ -88,7 +84,7 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
 
         if (!s.isAutoRenovacion()) {
             log.info("Renovación ya cancelada previamente para {}", idSuscriptor);
-            return; // FA-02
+            return;
         }
 
         s.cancelarRenovacion();
@@ -131,7 +127,6 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
             throw new IllegalArgumentException("El plan seleccionado no está disponible.");
         }
 
-        // ADR 09: mismo TipoSuscriptor
         if (nuevoPlan.getTipoSuscriptor() != s.getTipoSuscriptor()) {
             throw new IllegalArgumentException(
                 "No se puede cambiar a un plan de tipo " + nuevoPlan.getTipoSuscriptor()
@@ -145,14 +140,12 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
         int cmp = nuevoPlan.getPrecio().valor().compareTo(planActual.getPrecio().valor());
 
         if (cmp > 0) {
-            // UPGRADE: cobro inmediato de la diferencia
             Monto diferencia = new Monto(
                 nuevoPlan.getPrecio().valor().subtract(planActual.getPrecio().valor()),
                 nuevoPlan.getPrecio().moneda());
 
-            String ref = UUID.randomUUID().toString();
-            OrdenPago ordenUpgrade = new OrdenPago(null, s.getId(), diferencia, ref);
-            ordenPagoRepository.guardar(ordenUpgrade);
+            OrdenPago ordenUpgrade = new OrdenPago(null, s.getId(), diferencia, null);
+            ordenUpgrade = ordenPagoRepository.guardar(ordenUpgrade);
 
             s.programarCambioPlan(nuevoPlanId);
             suscripcionRepository.guardar(s);
@@ -160,7 +153,6 @@ public class SuscribirAlmacenUseCaseImpl implements SuscripcionPort {
             Map<String, String> mp = mercadoPagoPort.crearPreferenciaPago(ordenUpgrade, s, emailPayer);
             return mp.get(MP_INIT_POINT);
         } else {
-            // DOWNGRADE: programar para la próxima renovación
             s.programarCambioPlan(nuevoPlanId);
             suscripcionRepository.guardar(s);
             return null;

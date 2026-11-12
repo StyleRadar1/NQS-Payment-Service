@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -71,20 +72,53 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
     }
 
     private void procesarEventoPago(String idPagoExterno) {
-        String estadoReal = mercadoPagoPort.consultarEstadoPago(idPagoExterno);
+        // 1. Consultar a MP por el pago completo para obtener el external_reference
+        Map<String, Object> pagoData = mercadoPagoPort.consultarPago(idPagoExterno);
+        if (pagoData == null || pagoData.get("status") == null) {
+            log.warn("No se pudo obtener información del pago {} en MP", idPagoExterno);
+            return;
+        }
+
+        String estadoReal = pagoData.get("status").toString();
+        String externalRef = pagoData.get("external_reference") != null ? pagoData.get("external_reference").toString() : null;
+
+        if (externalRef == null || externalRef.isEmpty()) {
+            log.warn("El pago {} no tiene external_reference", idPagoExterno);
+            return;
+        }
+
+        Long ordenId;
+        try {
+            ordenId = Long.valueOf(externalRef);
+        } catch (NumberFormatException e) {
+            log.warn("external_reference inválido: {}", externalRef);
+            return;
+        }
+
         EstadoPago estado = parseEstado(estadoReal);
         if (estado == null) {
             log.warn("Estado desconocido '{}' para pago {}. Ignorado.", estadoReal, idPagoExterno);
             return;
         }
 
-        OrdenPago orden = ordenPagoRepository.buscarPorIdPagoExterno(idPagoExterno)
+        // 2. Buscar la orden por nuestro ID real
+        OrdenPago orden = ordenPagoRepository.buscarPorId(ordenId)
                 .orElseThrow(() -> new PaymentProcessingException(
-                        "No se encontró orden para el pago: " + idPagoExterno));
+                        "No se encontró orden para el external_reference: " + ordenId));
 
-        // SR-RNF-14: idempotencia por estado.
+        // 3. Actualizar el idPagoExterno si no lo tiene
+        boolean actualizado = false;
+        if (orden.getIdPagoExterno() == null) {
+            orden.actualizarIdPagoExterno(idPagoExterno);
+            actualizado = true;
+        }
+
+        // 4. Idempotencia por estado
         if (orden.getEstado() == estado) {
             log.info("Orden {} ya en estado {}. Skip idempotente.", orden.getId(), estado);
+            if (actualizado) {
+                ordenPagoRepository.guardar(orden);
+            }
             return;
         }
 

@@ -74,10 +74,11 @@ class SuscribirAlmacenUseCaseImplTest {
     void debeCrearSuscripcionCuandoEsNueva() {
         Plan p = plan(2L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
         Suscripcion guardada = new Suscripcion(100L, "U", TipoSuscriptor.USUARIO, 2L);
-
+        
         when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(p));
         when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.empty());
         when(suscripcionRepository.guardar(any())).thenReturn(guardada);
+        when(ordenPagoRepository.guardar(any(OrdenPago.class))).thenReturn(new OrdenPago(1L, 100L, new Monto(BigDecimal.TEN, "COP"), null));
         when(mercadoPagoPort.crearPreferenciaPago(any(), any(), anyString()))
             .thenReturn(Map.of("init_point", "https://mp.com/x", "preapproval_id", "PRE-123"));
 
@@ -97,6 +98,7 @@ class SuscribirAlmacenUseCaseImplTest {
         when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
         when(planRepository.buscarPorId(1L)).thenReturn(Optional.of(actual));
         when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(nuevo));
+        when(ordenPagoRepository.guardar(any(OrdenPago.class))).thenReturn(new OrdenPago(2L, 1L, new Monto(BigDecimal.TEN, "COP"), null));
         when(mercadoPagoPort.crearPreferenciaPago(any(), any(), anyString()))
             .thenReturn(Map.of("init_point", "https://mp.com/upg", "preapproval_id", "PRE-2"));
 

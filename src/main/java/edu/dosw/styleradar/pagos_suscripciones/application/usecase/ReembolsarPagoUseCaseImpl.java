@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -41,7 +40,6 @@ public class ReembolsarPagoUseCaseImpl implements PagoPort {
         mercadoPagoPort.reembolsarPago(orden.getIdPagoExterno(), montoReembolsoStr);
         ordenPagoRepository.guardar(orden);
 
-        // SR-RF-98 FA-02: reembolso total cancela la suscripción
         if (orden.fueReembolsadoTotalmente()) {
             suscripcionRepository.buscarPorId(orden.getSuscripcionId()).ifPresent(sub -> {
                 sub.cancelarRenovacion();
@@ -72,7 +70,6 @@ public class ReembolsarPagoUseCaseImpl implements PagoPort {
         OrdenPago ordenOriginal = ordenPagoRepository.buscarPorId(ordenPagoId)
                 .orElseThrow(() -> new PaymentProcessingException("Orden de pago no encontrada"));
 
-        // RN-01: no re-intentar si ya hay un pago aprobado para el mismo período
         Suscripcion sub = suscripcionRepository.buscarPorId(ordenOriginal.getSuscripcionId())
                 .orElseThrow(() -> new PaymentProcessingException("Suscripción asociada no encontrada"));
 
@@ -91,10 +88,9 @@ public class ReembolsarPagoUseCaseImpl implements PagoPort {
                 "Solo se pueden reintentar pagos rechazados o pendientes.");
         }
 
-        // Crear nueva orden
-        String ref = UUID.randomUUID().toString();
-        OrdenPago nueva = new OrdenPago(null, sub.getId(), ordenOriginal.getMonto(), ref);
-        ordenPagoRepository.guardar(nueva);
+        // GUARDAMOS PRIMERO PARA OBTENER EL ID REAL
+        OrdenPago nueva = new OrdenPago(null, sub.getId(), ordenOriginal.getMonto(), null);
+        nueva = ordenPagoRepository.guardar(nueva);
 
         Map<String, String> mp = mercadoPagoPort.crearPreferenciaPago(nueva, sub, emailPayer);
         return mp.get("init_point");

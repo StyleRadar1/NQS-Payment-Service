@@ -18,7 +18,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MercadoPagoAdapter implements MercadoPagoPort {
 
-    // --- Constantes de claves de respuesta MP ---
     private static final String KEY_INIT_POINT = "init_point";
     private static final String KEY_PREAPPROVAL_ID = "preapproval_id";
     private static final String MP_KEY_ID = "id";
@@ -37,7 +36,10 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
     public Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer) {
         Map<String, Object> req = new HashMap<>();
         req.put("reason", "Suscripción StyleRadar - Plan " + suscripcion.getPlanId());
-        req.put("external_reference", suscripcion.getId().toString());
+        
+        // CRÍTICO: Usar el ID de la orden como external_reference
+        req.put("external_reference", orden.getId().toString());
+        
         req.put("payer_email", emailPayer);
         req.put("status", "pending");
         req.put("notification_url", webhookUrl);
@@ -77,10 +79,15 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
 
     @Override
     public String consultarEstadoPago(String idPagoExterno) {
+        Map<String, Object> pago = consultarPago(idPagoExterno);
+        return pago != null && pago.get("status") != null ? pago.get("status").toString() : null;
+    }
+
+    // --- NUEVA IMPLEMENTACIÓN ---
+    @Override
+    public Map<String, Object> consultarPago(String idPagoExterno) {
         try {
-            Map<String, Object> pago = feignClient.consultarPago(auth(), idPagoExterno);
-            Object status = pago != null ? pago.get("status") : null;
-            return status != null ? status.toString() : null;
+            return feignClient.consultarPago(auth(), idPagoExterno);
         } catch (Exception e) {
             log.error("Error consultando pago {} en MP: {}", idPagoExterno, e.getMessage());
             return null;

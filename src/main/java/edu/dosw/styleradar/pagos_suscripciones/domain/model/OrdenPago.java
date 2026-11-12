@@ -26,6 +26,10 @@ public class OrdenPago {
     public void actualizarEstado(String nuevoEstado) {
         this.estado = EstadoPago.valueOf(nuevoEstado.toUpperCase());
     }
+    
+    public void actualizarIdPagoExterno(String idPagoExterno) {
+        this.idPagoExterno = idPagoExterno;
+    }
 
     public void aprobar() {
         if (this.estado != EstadoPago.PENDIENTE) {
@@ -53,7 +57,6 @@ public class OrdenPago {
         }
     }
 
-    /** Fix B4: restaura estado y datos de reembolso al leer de BD. */
     public void rehidratar(EstadoPago estado, Monto montoReembolsado, String motivoReembolso) {
         this.estado = estado;
         this.montoReembolsado = montoReembolsado != null ? montoReembolsado : this.montoReembolsado;

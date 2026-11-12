@@ -18,8 +18,8 @@ public class MockMercadoPagoAdapter implements MercadoPagoPort {
     public Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer) {
         log.info("🧪 MOCK: creación de pago para plan {}", suscripcion.getPlanId());
         return Map.of(
-            "init_point", "https://www.mercadopago.com.co/sandbox/checkout/v1/redirect?pref_id=MOCK-" + orden.getIdPagoExterno(),
-            "preapproval_id", "MOCK-PREAPPROVAL-" + orden.getIdPagoExterno()
+            "init_point", "https://www.mercadopago.com.co/sandbox/checkout/v1/redirect?pref_id=MOCK-" + orden.getId(),
+            "preapproval_id", "MOCK-PREAPPROVAL-" + orden.getId()
         );
     }
 
@@ -37,5 +37,11 @@ public class MockMercadoPagoAdapter implements MercadoPagoPort {
     public String consultarEstadoPago(String idPagoExterno) {
         log.info("🧪 MOCK: consultando estado de pago {} → approved", idPagoExterno);
         return "approved";
+    }
+
+    @Override
+    public Map<String, Object> consultarPago(String idPagoExterno) {
+        log.info("🧪 MOCK: consultando pago completo {} → approved con external_reference 1", idPagoExterno);
+        return Map.of("status", "approved", "external_reference", "1");
     }
 }
