@@ -238,8 +238,8 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 
 | Entorno | Estado | Propósito | URL Base del Servicio | Swagger OpenAPI UI | Health Check |
 | :--- | :---: | :--- | :--- | :--- | :--- |
-| **Producción (PROD)** | Active | Despliegue productivo de StyleRadar | `https://styleradar-backend-prod.azurewebsites.net` | [Swagger UI PROD](https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html) | [`/actuator/health`](https://styleradar-backend-prod.azurewebsites.net/actuator/health) |
-| **Calidad / Pruebas (QA)** | Active | Pruebas integradas de Sprint y QA | `https://styleradar-backend-qa.azurewebsites.net` | [Swagger UI QA](https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html) | [`/actuator/health`](https://styleradar-backend-qa.azurewebsites.net/actuator/health) |
+| **Producción (PROD)** | Active | Despliegue productivo de StyleRadar | `  https://ms-pagos-prod.happyriver-65727909.northcentralus.azurecontainerapps.io` | [Swagger UI PROD](  https://ms-pagos-prod.happyriver-65727909.northcentralus.azurecontainerapps.io/swagger-ui/index.html) | [`/actuator/health`](https://ms-pagos-prod.happyriver-65727909.northcentralus.azurecontainerapps.io/actuator/health) |
+| **Calidad / Pruebas (QA)** | Active | Pruebas integradas de Sprint y QA | `https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io` | [Swagger UI QA](https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io/swagger-ui/index.html) | [`/actuator/health`](https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io/actuator/health) |
 | **Desarrollo Local (DEV)** | Local | Entorno de desarrollo local en máquina | `http://localhost:8400` | [Swagger UI Local](http://localhost:8400/swagger-ui.html) | [`/actuator/health`](http://localhost:8400/actuator/health) |
 
 * **Especificación OpenAPI (Contrato JSON Schema):** `http://localhost:8400/v3/api-docs` (o `/v3/api-docs` en los dominios de PROD y QA).
