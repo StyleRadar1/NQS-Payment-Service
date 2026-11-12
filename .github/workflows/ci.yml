@@ -1,65 +1,84 @@
-name: CI/CD Pipeline - ms-pagos-suscripciones
+name: CI/CD - ms-pagos-suscripciones
 
 on:
   push:
-    branches: [ "develop", "master" ]
-  pull_request:
-    branches: [ "develop", "master" ]
+    branches: [ "develop", "main", "master" ]
+
+env:
+  DOCKER_IMAGE: juangv1/styleradar-ms-pagos
+  RESOURCE_GROUP: rg-styleradar-pagos
+  CONTAINER_APP_QA: ms-pagos-qa
+  CONTAINER_APP_PROD: ms-pagos-prod
 
 jobs:
-  # --- TRABAJO 1: BUILD Y PRUEBAS ---
+  # 1. Pruebas y Build
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout del código
-      uses: actions/checkout@v4
-
+    - uses: actions/checkout@v4
     - name: Configurar JDK 21
       uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
-
-    - name: Ejecutar pruebas y empaquetar
+    - name: Pruebas y Empaquetado
       run: mvn -B clean verify
-
-    # (Opcional) Guardar el reporte de cobertura como artefacto
-    - name: Subir reporte de cobertura JaCoCo
+    - name: Subir reporte JaCoCo
       uses: actions/upload-artifact@v4
       with:
         name: jacoco-report
         path: target/site/jacoco/
 
-  # --- TRABAJO 2: CONSTRUIR Y SUBIR IMAGEN DOCKER ---
-  build-and-push-docker:
+  # 2. Docker Push
+  docker-build-push:
     needs: build-and-test
     runs-on: ubuntu-latest
-    # Solo hacer push si estamos en las ramas principales (no en PRs)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')
-    
     steps:
-    - name: Checkout del código
-      uses: actions/checkout@v4
-
-    - name: Iniciar sesión en Docker Hub
+    - uses: actions/checkout@v4
+    - name: Login en Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Configurar Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Construir y subir la imagen Docker
+    - name: Construir y subir imagen
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
-        # Etiquetamos la imagen con la rama y el hash del commit para tener trazabilidad
-        tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/styleradar-ms-pagos:latest
-          ${{ secrets.DOCKERHUB_USERNAME }}/styleradar-ms-pagos:${{ github.sha }}
-        # Caché para acelerar futuros builds
-        cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/styleradar-ms-pagos:buildcache
-        cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/styleradar-ms-pagos:buildcache,mode=max
+        tags: ${{ env.DOCKER_IMAGE }}:latest
+
+  # 3. Deploy a QA (rama develop)
+  deploy-qa:
+    needs: docker-build-push
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Login en Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Desplegar en Azure Container App QA
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        containerAppName: ${{ env.CONTAINER_APP_QA }}
+        imageToDeploy: ${{ env.DOCKER_IMAGE }}:latest
+
+  # 4. Deploy a PROD (rama main/master) - Requiere aprobación
+  deploy-prod:
+    needs: docker-build-push
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: production # Requiere aprobación manual en GitHub
+    steps:
+    - name: Login en Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Desplegar en Azure Container App PROD
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        containerAppName: ${{ env.CONTAINER_APP_PROD }}
+        imageToDeploy: ${{ env.DOCKER_IMAGE }}:latest

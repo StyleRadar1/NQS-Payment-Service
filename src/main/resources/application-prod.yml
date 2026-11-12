@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/styleradar_pagos}
+    username: ${SPRING_DATASOURCE_USERNAME:sr_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:sr_password}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+
+mercadopago:
+  access-token: ${MP_ACCESS_TOKEN}
+  public-key: ${MP_PUBLIC_KEY}
+  webhook-secret: ${MP_WEBHOOK_SECRET}
+  api:
+    url: https://api.mercadopago.com
+  webhook-url: https://extradite-faceted-magnifier.ngrok-free.dev/api/v1/webhooks/mercadopago
