@@ -2,7 +2,6 @@ package edu.dosw.styleradar.pagos_suscripciones.application.usecase;
 
 import edu.dosw.styleradar.pagos_suscripciones.application.service.SuscripcionActivacionService;
 import edu.dosw.styleradar.pagos_suscripciones.domain.exception.IdempotencyException;
-import edu.dosw.styleradar.pagos_suscripciones.domain.exception.PaymentProcessingException;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.EstadoPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.in.WebhookPort;
@@ -33,7 +32,7 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
     @Override
     @Transactional
     public void procesarNotificacionPago(String idExterno, String accion, String tipoEvento, String payloadJson) {
-        log.info("Webhook ID={} acción={} tipo={}", idExterno, accion, tipoEvento);
+        log.info("Procesando Webhook ID={} acción={} tipo={}", idExterno, accion, tipoEvento);
 
         if (idExterno == null) {
             log.warn("Webhook sin data.id, ignorado.");
@@ -66,16 +65,17 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
             } else {
                 log.warn("Tipo de evento no soportado: {}", tipoEvento);
             }
+        } catch (Exception e) {
+            log.error("Error procesando el webhook en el caso de uso: {}", e.getMessage(), e);
         } finally {
             idempotencyPort.liberarLock(lockKey);
         }
     }
 
     private void procesarEventoPago(String idPagoExterno) {
-        // 1. Consultar a MP por el pago completo para obtener el external_reference
         Map<String, Object> pagoData = mercadoPagoPort.consultarPago(idPagoExterno);
         if (pagoData == null || pagoData.get("status") == null) {
-            log.warn("No se pudo obtener información del pago {} en MP", idPagoExterno);
+            log.warn("No se pudo obtener información del pago {} en MP (posible ID inválido en simulación)", idPagoExterno);
             return;
         }
 
@@ -101,24 +101,21 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
             return;
         }
 
-        // 2. Buscar la orden por nuestro ID real
-        OrdenPago orden = ordenPagoRepository.buscarPorId(ordenId)
-                .orElseThrow(() -> new PaymentProcessingException(
-                        "No se encontró orden para el external_reference: " + ordenId));
+        OrdenPago orden = ordenPagoRepository.buscarPorId(ordenId).orElse(null);
+        if (orden == null) {
+            log.warn("No se encontró orden local para el external_reference: {}", ordenId);
+            return;
+        }
 
-        // 3. Actualizar el idPagoExterno si no lo tiene
         boolean actualizado = false;
         if (orden.getIdPagoExterno() == null) {
             orden.actualizarIdPagoExterno(idPagoExterno);
             actualizado = true;
         }
 
-        // 4. Idempotencia por estado
         if (orden.getEstado() == estado) {
             log.info("Orden {} ya en estado {}. Skip idempotente.", orden.getId(), estado);
-            if (actualizado) {
-                ordenPagoRepository.guardar(orden);
-            }
+            if (actualizado) ordenPagoRepository.guardar(orden);
             return;
         }
 

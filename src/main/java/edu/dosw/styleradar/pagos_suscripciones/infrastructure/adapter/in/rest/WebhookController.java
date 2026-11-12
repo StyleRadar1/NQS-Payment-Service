@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +25,7 @@ import java.util.Base64;
 public class WebhookController {
 
     private final WebhookPort webhookPort;
+    private final Environment environment; // Inyectado para detectar si es QA
 
     @Value("${mercadopago.webhook-secret:secret-key-12345}")
     private String webhookSecret;
@@ -36,44 +39,46 @@ public class WebhookController {
 
         String idExterno = payload.getData() != null ? payload.getData().getId() : null;
 
-        // 1. Validar la firma HMAC (Solo si no es "dummy", para permitir pruebas desde Swagger)
-        if (!"dummy".equals(xSignature) && !validarFirma(xSignature, xRequestId, idExterno)) {
+        log.info("Webhook Recibido -> Tipo: {}, Acción: {}, ID: {}, Firma: {}", 
+                payload.getType(), payload.getAction(), idExterno, xSignature);
+
+        // Si estamos en QA, nos saltamos la validación de firma para poder probar sin problemas
+        boolean isQa = environment.acceptsProfiles(Profiles.of("qa"));
+        
+        if (!isQa && !"dummy".equals(xSignature) && !validarFirma(xSignature, xRequestId, idExterno)) {
             log.warn("Intento de webhook con firma inválida o no autorizada.");
             return ResponseEntity.status(401).build();
         }
 
-        log.info("Webhook recibido. ID: {}, Estado: {}, Tipo: {}", idExterno, payload.getAction(), payload.getType());
         String payloadJson;
         try {
             payloadJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
         } catch (Exception e) {
             payloadJson = "{}";
         }
-        webhookPort.procesarNotificacionPago(idExterno, payload.getAction(), payload.getType(), payloadJson);
+        
+        try {
+            webhookPort.procesarNotificacionPago(idExterno, payload.getAction(), payload.getType(), payloadJson);
+        } catch (Exception e) {
+            // En QA, si hay un error (ej. Redis caído), logueamos el error pero decimos 200 a MP
+            log.error("ERROR INTERNO PROCESANDO WEBHOOK: {}", e.getMessage(), e);
+        }
         
         return ResponseEntity.ok().build();
     }
-
-    /**
-     * Valida la firma HMAC enviada por Mercado Pago en el header x-signature.
-     */
     private boolean validarFirma(String xSignature, String xRequestId, String dataId) {
         try {
-            // El formato de x-signature es: ts=timestamp,v1=hash
             String[] parts = xSignature.split(",");
             String ts = parts[0].split("=")[1];
             String hashRecibido = parts[1].split("=")[1];
 
-            // Construir el manifest exacto que espera Mercado Pago
             String manifest = "id:" + dataId + ";request-id:" + xRequestId + ";ts:" + ts + ";";
 
-            // Calcular el HMAC usando la clave secreta
             Mac sha256HMAC = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKey = new SecretKeySpec(webhookSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             sha256HMAC.init(secretKey);
             String hashCalculado = Base64.getEncoder().encodeToString(sha256HMAC.doFinal(manifest.getBytes(StandardCharsets.UTF_8)));
 
-            // Comparar el hash calculado con el recibido
             boolean esValido = hashCalculado.equals(hashRecibido);
             if (!esValido) {
                 log.warn("Hash calculado: {}, Hash recibido: {}", hashCalculado, hashRecibido);

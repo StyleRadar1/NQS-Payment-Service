@@ -36,14 +36,14 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
     public Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer) {
         Map<String, Object> req = new HashMap<>();
         req.put("reason", "Suscripción StyleRadar - Plan " + suscripcion.getPlanId());
-        
-        // CRÍTICO: Usar el ID de la orden como external_reference
         req.put("external_reference", orden.getId().toString());
-        
         req.put("payer_email", emailPayer);
         req.put("status", "pending");
         req.put("notification_url", webhookUrl);
-        req.put("back_url", "https://styleradar.com/suscripcion/resultado");
+        
+        // CAMBIO AQUÍ: Redirigir a Swagger en lugar de styleradar.com que no existe
+        req.put("back_url", "https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io/swagger-ui/index.html");
+        
         req.put("auto_recurring", Map.of(
                 "frequency", 1,
                 "frequency_type", "months",
@@ -83,13 +83,12 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
         return pago != null && pago.get("status") != null ? pago.get("status").toString() : null;
     }
 
-    // --- NUEVA IMPLEMENTACIÓN ---
     @Override
     public Map<String, Object> consultarPago(String idPagoExterno) {
         try {
             return feignClient.consultarPago(auth(), idPagoExterno);
         } catch (Exception e) {
-            log.error("Error consultando pago {} en MP: {}", idPagoExterno, e.getMessage());
+            log.error("Error consultando pago {} en MP (posiblemente ID falso de prueba): {}", idPagoExterno, e.getMessage());
             return null;
         }
     }
