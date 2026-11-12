@@ -8,26 +8,28 @@ import edu.dosw.styleradar.pagos_suscripciones.infrastructure.adapter.out.persis
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class PlanPersistenceAdapter implements PlanRepositoryPort {
 
-    private final PlanJpaRepository planJpaRepository;
+    private final PlanJpaRepository repo;
 
     @Override
     public Optional<Plan> buscarPorId(Long id) {
-        return planJpaRepository.findById(id).map(this::toDomain);
+        return repo.findById(id).map(this::toDomain);
     }
 
-    private Plan toDomain(PlanEntity entity) {
-        return new Plan(
-                entity.getId(),
-                entity.getNombre(),
-                entity.getTipoSuscriptor(),
-                new Monto(entity.getPrecio(), entity.getMoneda()),
-                entity.getLimites()
-        );
+    private Plan toDomain(PlanEntity e) {
+        Plan p = new Plan(e.getId(), e.getNombre(), e.getTipoSuscriptor(),
+                          new Monto(e.getPrecio(), e.getMoneda()), e.getLimites());
+        if (!e.isActivo()) p.desactivar();
+        return p;
+    }
+
+    public List<Plan> listarActivos() {
+        return repo.findByActivoTrue().stream().map(this::toDomain).toList();
     }
 }

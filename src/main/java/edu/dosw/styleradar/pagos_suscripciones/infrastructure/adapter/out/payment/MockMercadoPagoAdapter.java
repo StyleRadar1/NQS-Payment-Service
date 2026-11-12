@@ -11,25 +11,31 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@Profile("dev") // <--- Solo se activa en desarrollo
+@Profile({"dev", "test"})
 public class MockMercadoPagoAdapter implements MercadoPagoPort {
 
     @Override
     public Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer) {
-        log.info("🧪 MOCK: Simulando creación de pago para el plan {}", suscripcion.getPlanId());
+        log.info("🧪 MOCK: creación de pago para plan {}", suscripcion.getPlanId());
         return Map.of(
-                "init_point", "https://www.mercadopago.com.co/sandbox/checkout/v1/redirect?pref_id=MOCK-" + orden.getIdPagoExterno(),
-                "preapproval_id", "MOCK-PREAPPROVAL-" + orden.getIdPagoExterno()
+            "init_point", "https://www.mercadopago.com.co/sandbox/checkout/v1/redirect?pref_id=MOCK-" + orden.getIdPagoExterno(),
+            "preapproval_id", "MOCK-PREAPPROVAL-" + orden.getIdPagoExterno()
         );
     }
 
     @Override
     public void cancelarPreapproval(String preapprovalId) {
-        log.info("🧪 MOCK: Cancelando preapproval en Mercado Pago con ID: {}", preapprovalId);
+        log.info("🧪 MOCK: cancel preapproval {}", preapprovalId);
     }
 
     @Override
     public void reembolsarPago(String idPagoExterno, String monto) {
-        log.info("🧪 MOCK: Simulando reembolso a Mercado Pago de ${} para el pago {}", monto, idPagoExterno);
+        log.info("🧪 MOCK: reembolso {} para pago {}", monto, idPagoExterno);
+    }
+
+    @Override
+    public String consultarEstadoPago(String idPagoExterno) {
+        log.info("🧪 MOCK: consultando estado de pago {} → approved", idPagoExterno);
+        return "approved";
     }
 }

@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "webhooks_log")
 @Data
@@ -22,4 +25,8 @@ public class WebhookLogEntity {
     
     @Column(name = "fecha_recepcion")
     private LocalDateTime fechaRecepcion;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "payload_recibido", columnDefinition = "jsonb")
+    private String payloadRecibido;
 }

@@ -9,28 +9,45 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/pagos")
 @RequiredArgsConstructor
-@Tag(name = "Pagos", description = "Endpoints para consulta y gestión de pagos")
+@Tag(name = "Pagos")
 public class PagoController {
 
     private final PagoPort pagoPort;
 
-    @Operation(summary = "Consultar historial de pagos")
-    @GetMapping("/historial/{suscriptorId}")
-    public ResponseEntity<List<OrdenPago>> consultarHistorial(@PathVariable String suscriptorId) {
+    @Operation(summary = "Historial de pagos propios",
+               description = "El suscriptorId se toma del header X-User-Id (inyectado por el Gateway).")
+    @GetMapping("/historial")
+    public ResponseEntity<List<OrdenPago>> historial(
+            @RequestHeader("X-User-Id") String suscriptorId) {
         return ResponseEntity.ok(pagoPort.consultarHistorialPagos(suscriptorId));
     }
 
-    @Operation(summary = "Reembolsar un pago")
+    @Operation(summary = "Reembolsar pago (solo ADMIN)")
     @PostMapping("/{ordenId}/reembolsar")
     public ResponseEntity<Void> reembolsar(
             @PathVariable Long ordenId,
             @RequestParam String monto,
-            @RequestParam String motivo) {
+            @RequestParam String motivo,
+            @RequestHeader(value = "X-User-Role", defaultValue = "USER") String rol) {
+        if (!"ADMIN".equalsIgnoreCase(rol)) {
+            return ResponseEntity.status(403).build();
+        }
         pagoPort.reembolsarPago(ordenId, monto, motivo);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Reintentar pago rechazado/pendiente")
+    @PostMapping("/{ordenId}/reintentar")
+    public ResponseEntity<Map<String, String>> reintentar(
+            @PathVariable Long ordenId,
+            @RequestHeader("X-User-Id") String suscriptorId,
+            @RequestParam String emailPayer) {
+        String initPoint = pagoPort.reintentarPago(ordenId, suscriptorId, emailPayer);
+        return ResponseEntity.ok(Map.of("init_point", initPoint));
     }
 }

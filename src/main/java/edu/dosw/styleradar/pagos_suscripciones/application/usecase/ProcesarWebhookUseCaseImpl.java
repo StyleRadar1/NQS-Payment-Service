@@ -1,12 +1,14 @@
 package edu.dosw.styleradar.pagos_suscripciones.application.usecase;
 
+import edu.dosw.styleradar.pagos_suscripciones.application.service.SuscripcionActivacionService;
 import edu.dosw.styleradar.pagos_suscripciones.domain.exception.IdempotencyException;
 import edu.dosw.styleradar.pagos_suscripciones.domain.exception.PaymentProcessingException;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.EstadoPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
-import edu.dosw.styleradar.pagos_suscripciones.domain.model.Suscripcion;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.in.WebhookPort;
-import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.*;
+import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.IdempotencyPort;
+import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.MercadoPagoPort;
+import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.OrdenPagoRepositoryPort;
 import edu.dosw.styleradar.pagos_suscripciones.infrastructure.adapter.out.persistence.entity.WebhookLogEntity;
 import edu.dosw.styleradar.pagos_suscripciones.infrastructure.adapter.out.persistence.repository.WebhookLogJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -24,83 +25,87 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
 
     private final IdempotencyPort idempotencyPort;
     private final OrdenPagoRepositoryPort ordenPagoRepository;
-    private final SuscripcionRepositoryPort suscripcionRepository;
-    private final EventPublisherPort eventPublisher;
-    private final WebhookLogJpaRepository webhookLogRepository; // <--- NUEVO
+    private final MercadoPagoPort mercadoPagoPort;
+    private final WebhookLogJpaRepository webhookLogRepository;
+    private final SuscripcionActivacionService suscripcionActivacionService;
 
     @Override
     @Transactional
-    public void procesarNotificacionPago(String idExterno, String estadoPago, String tipoEvento) {
-        log.info("Iniciando procesamiento de webhook para ID: {} con estado: {}", idExterno, estadoPago);
-        
-        // 1. Guardar el log del webhook (para la tabla de auditoría)
-        if (!webhookLogRepository.existsByIdPagoExterno(idExterno))  {
-            WebhookLogEntity logEntity = new WebhookLogEntity();
-            logEntity.setIdPagoExterno(idExterno);
-            logEntity.setEstadoProcesamiento(estadoPago != null ? estadoPago : "RECIBIDO");
-            logEntity.setFechaRecepcion(LocalDateTime.now());
-            webhookLogRepository.save(logEntity);
+    public void procesarNotificacionPago(String idExterno, String accion, String tipoEvento, String payloadJson) {
+        log.info("Webhook ID={} acción={} tipo={}", idExterno, accion, tipoEvento);
+
+        if (idExterno == null) {
+            log.warn("Webhook sin data.id, ignorado.");
+            return;
         }
 
         String lockKey = "lock:pago_" + idExterno;
         if (!idempotencyPort.adquirirLock(lockKey)) {
-            log.warn("Webhook duplicado detectado concurrentemente para: {}", idExterno);
             throw new IdempotencyException("El pago ya está siendo procesado por otra instancia.");
         }
-
         try {
-            // 2. Buscar la suscripción por preapproval_id
-            Suscripcion suscripcion = suscripcionRepository.buscarPorPreapprovalId(idExterno)
-                    .orElse(null);
+            if (!webhookLogRepository.existsByIdPagoExterno(idExterno)) {
+                WebhookLogEntity entry = new WebhookLogEntity();
+                entry.setIdPagoExterno(idExterno);
+                entry.setEstadoProcesamiento(accion != null ? accion : "RECIBIDO");
+                entry.setFechaRecepcion(LocalDateTime.now());
+                entry.setPayloadRecibido(payloadJson);
+                webhookLogRepository.save(entry);
+            }
 
-            if (suscripcion != null) {
-                log.info("Suscripción encontrada por preapproval_id: {}. Activando...", idExterno);
-                
-                if (suscripcion.getEstado().name().equals("ACTIVA")) {
-                    log.info("Webhook ya procesado previamente (Suscripción ya activa) para: {}", idExterno);
-                    return;
-                }
-
-                suscripcion.activar(LocalDate.now().plusMonths(1));
-                suscripcionRepository.guardar(suscripcion);
-                
-                //Actualizar la orden de pago a APROBADO
-                ordenPagoRepository.buscarPorSuscripcionId(suscripcion.getId()).forEach(orden -> {
-                    if (orden.getEstado() == EstadoPago.PENDIENTE) {
-                        orden.aprobar();
-                        ordenPagoRepository.guardar(orden);
-                        log.info("Orden de pago actualizada a APROBADO: {}", orden.getId());
-                    }
-                });
-
-                eventPublisher.publicarPagoConfirmado(suscripcion);
+            if (tipoEvento == null) {
+                log.warn("Webhook sin tipo, ignorado.");
                 return;
             }
 
-            // 3. Si no es suscripción, buscar por OrdenPago
-            OrdenPago ordenPago = ordenPagoRepository.buscarPorIdPagoExterno(idExterno)
-                    .orElseThrow(() -> new PaymentProcessingException("No se encontró orden ni suscripción para el ID: " + idExterno));
-
-            ordenPago.actualizarEstado(estadoPago);
-            ordenPagoRepository.guardar(ordenPago);
-
-            if (EstadoPago.APROBADO.name().equalsIgnoreCase(estadoPago)) {
-                procesarPagoAprobado(ordenPago);
+            if (tipoEvento.equalsIgnoreCase("payment")) {
+                procesarEventoPago(idExterno);
+            } else if (tipoEvento.toLowerCase().contains("preapproval")) {
+                log.info("Evento preapproval recibido para {} (informativo).", idExterno);
             } else {
-                log.warn("Pago {} en estado {}. No se activan beneficios.", idExterno, estadoPago);
+                log.warn("Tipo de evento no soportado: {}", tipoEvento);
             }
         } finally {
             idempotencyPort.liberarLock(lockKey);
         }
     }
 
-    private void procesarPagoAprobado(OrdenPago ordenPago) {
-        Suscripcion suscripcion = suscripcionRepository.buscarPorId(ordenPago.getSuscripcionId())
-                .orElseThrow(() -> new PaymentProcessingException("Suscripción no encontrada para la orden de pago ID: " + ordenPago.getId()));
+    private void procesarEventoPago(String idPagoExterno) {
+        String estadoReal = mercadoPagoPort.consultarEstadoPago(idPagoExterno);
+        EstadoPago estado = parseEstado(estadoReal);
+        if (estado == null) {
+            log.warn("Estado desconocido '{}' para pago {}. Ignorado.", estadoReal, idPagoExterno);
+            return;
+        }
 
-        suscripcion.activar(LocalDate.now().plusMonths(1));
-        suscripcionRepository.guardar(suscripcion);
-        eventPublisher.publicarPagoConfirmado(suscripcion);
-        log.info("Evento PagoConfirmado publicado para suscriptor: {}", suscripcion.getSuscriptorId());
+        OrdenPago orden = ordenPagoRepository.buscarPorIdPagoExterno(idPagoExterno)
+                .orElseThrow(() -> new PaymentProcessingException(
+                        "No se encontró orden para el pago: " + idPagoExterno));
+
+        // SR-RNF-14: idempotencia por estado.
+        if (orden.getEstado() == estado) {
+            log.info("Orden {} ya en estado {}. Skip idempotente.", orden.getId(), estado);
+            return;
+        }
+
+        orden.actualizarEstado(estado.name());
+        ordenPagoRepository.guardar(orden);
+
+        if (estado == EstadoPago.APROBADO) {
+            suscripcionActivacionService.activarYExtenderSuscripcion(orden);
+        } else {
+            log.warn("Pago {} en estado {}. No se activan beneficios.", idPagoExterno, estado);
+        }
+    }
+
+    private EstadoPago parseEstado(String raw) {
+        if (raw == null) return null;
+        return switch (raw.toLowerCase()) {
+            case "approved" -> EstadoPago.APROBADO;
+            case "rejected", "cancelled" -> EstadoPago.RECHAZADO;
+            case "pending", "in_process", "authorized", "in_mediation" -> EstadoPago.PENDIENTE;
+            case "refunded", "charged_back" -> EstadoPago.REEMBOLSADO;
+            default -> null;
+        };
     }
 }

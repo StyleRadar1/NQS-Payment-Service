@@ -20,5 +20,8 @@ public interface SuscripcionPort {
      */
     Suscripcion consultarSuscripcion(String idSuscriptor);
     
-    void programarCambioPlan(String idSuscriptor, Long nuevoPlanId);
+    /**
+     * @return init_point si es upgrade (cobro de diferencia); null si es downgrade.
+     */
+    String programarCambioPlan(String idSuscriptor, Long nuevoPlanId, String emailPayer);
 }

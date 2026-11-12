@@ -13,50 +13,41 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PersistenceMapperTest {
 
-    @Mock
-    private SuscripcionJpaRepository repository;
-
-    @InjectMocks
-    private SuscripcionPersistenceAdapter adapter;
+    @Mock private SuscripcionJpaRepository repository;
+    @InjectMocks private SuscripcionPersistenceAdapter adapter;
 
     @Test
-    void debeMapearSuscripcionConFechasYAutoRenovacionDesactivada() {
-        SuscripcionEntity entity = new SuscripcionEntity();
-        entity.setId(1L);
-        entity.setSuscriptorId("USER-1");
-        entity.setTipoSuscriptor(TipoSuscriptor.USUARIO);
-        entity.setPlanId(2L);
-        entity.setEstado(EstadoSuscripcion.ACTIVA);
-        entity.setFechaFin(LocalDate.now().plusDays(10));
-        entity.setAutoRenovacion(false);
-        
-        when(repository.findBySuscriptorId("USER-1")).thenReturn(Optional.of(entity));
+    void suscripcionSuspendidaConFechaNoSeRehidrataComoActiva() {
+        SuscripcionEntity e = new SuscripcionEntity();
+        e.setId(1L); e.setSuscriptorId("U"); e.setTipoSuscriptor(TipoSuscriptor.USUARIO);
+        e.setPlanId(2L); e.setEstado(EstadoSuscripcion.SUSPENDIDA);
+        e.setFechaInicio(LocalDate.now().minusDays(30));
+        e.setFechaFin(LocalDate.now().minusDays(1));
+        e.setAutoRenovacion(false);
+        e.setPlanProgramadoId(null);
 
-        Suscripcion domain = adapter.buscarPorSuscriptorId("USER-1").orElseThrow();
+        when(repository.findBySuscriptorId("U")).thenReturn(Optional.of(e));
 
-        assertFalse(domain.isAutoRenovacion());
-        assertNotNull(domain.getFechaFin());
+        Suscripcion d = adapter.buscarPorSuscriptorId("U").orElseThrow();
+        assertEquals(EstadoSuscripcion.SUSPENDIDA, d.getEstado());
+        assertEquals(e.getFechaInicio(), d.getFechaInicio()); // no reinició
+        assertFalse(d.isAutoRenovacion());
     }
 
     @Test
-    void debeMapearSuscripcionSinFechaFin() {
-        SuscripcionEntity entity = new SuscripcionEntity();
-        entity.setId(1L);
-        entity.setSuscriptorId("USER-2");
-        entity.setTipoSuscriptor(TipoSuscriptor.USUARIO);
-        entity.setPlanId(1L);
-        entity.setEstado(EstadoSuscripcion.PENDIENTE);
-        entity.setFechaFin(null); // Cubre el else
-        
-        when(repository.findBySuscriptorId("USER-2")).thenReturn(Optional.of(entity));
+    void restauraPlanProgramadoId() {
+        SuscripcionEntity e = new SuscripcionEntity();
+        e.setId(1L); e.setSuscriptorId("U"); e.setTipoSuscriptor(TipoSuscriptor.USUARIO);
+        e.setPlanId(2L); e.setPlanProgramadoId(1L);
+        e.setEstado(EstadoSuscripcion.ACTIVA); e.setAutoRenovacion(true);
 
-        Suscripcion domain = adapter.buscarPorSuscriptorId("USER-2").orElseThrow();
-        assertEquals(EstadoSuscripcion.PENDIENTE, domain.getEstado());
+        when(repository.findBySuscriptorId("U")).thenReturn(Optional.of(e));
+        Suscripcion d = adapter.buscarPorSuscriptorId("U").orElseThrow();
+        assertEquals(1L, d.getPlanProgramadoId());
     }
 }

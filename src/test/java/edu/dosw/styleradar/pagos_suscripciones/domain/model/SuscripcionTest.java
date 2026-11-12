@@ -8,70 +8,112 @@ class SuscripcionTest {
 
     @Test
     void debeIniciarEnEstadoPendiente() {
-        Suscripcion sub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        assertEquals(EstadoSuscripcion.PENDIENTE, sub.getEstado());
-        assertTrue(sub.isAutoRenovacion());
+        Suscripcion s = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
+        assertEquals(EstadoSuscripcion.PENDIENTE, s.getEstado());
+        assertTrue(s.isAutoRenovacion());
     }
 
     @Test
-    void debeActivarSuscripcion() {
-        Suscripcion sub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        LocalDate fechaFin = LocalDate.now().plusMonths(1);
-        
-        sub.activar(fechaFin);
-        
-        assertEquals(EstadoSuscripcion.ACTIVA, sub.getEstado());
-        assertEquals(fechaFin, sub.getFechaFin());
-        assertEquals(LocalDate.now(), sub.getFechaInicio());
+    void debeActivarSinReiniciarFechaInicioSiYaExiste() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        LocalDate inicioOriginal = LocalDate.now().minusDays(15);
+        s.rehidratar(EstadoSuscripcion.ACTIVA, inicioOriginal, LocalDate.now().plusDays(10), true, null, null);
+
+        s.activar(LocalDate.now().plusMonths(1));
+
+        assertEquals(inicioOriginal, s.getFechaInicio());
+        assertEquals(EstadoSuscripcion.ACTIVA, s.getEstado());
     }
 
     @Test
-    void debeSuspenderPorFaltaDePago() {
-        Suscripcion sub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        sub.suspenderPorFaltaDePago();
-        
-        assertEquals(EstadoSuscripcion.SUSPENDIDA, sub.getEstado());
-        assertFalse(sub.isAutoRenovacion());
+    void renovarDebeExtenderDesdeFechaFinSiSigueVigente() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        LocalDate finFuturo = LocalDate.now().plusDays(10);
+        s.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(), finFuturo, true, null, null);
+
+        s.renovar();
+
+        assertEquals(finFuturo.plusMonths(1), s.getFechaFin());
     }
 
     @Test
-    void debeCancelarRenovacion() {
-        Suscripcion sub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        sub.cancelarRenovacion();
-        assertFalse(sub.isAutoRenovacion());
+    void renovarDebeExtenderDesdeHoySiYaVencio() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        s.rehidratar(EstadoSuscripcion.VENCIDA, LocalDate.now().minusMonths(2),
+                     LocalDate.now().minusDays(5), true, null, null);
+
+        s.renovar();
+
+        assertEquals(LocalDate.now().plusMonths(1), s.getFechaFin());
+        assertEquals(EstadoSuscripcion.ACTIVA, s.getEstado());
     }
 
     @Test
-    void debeDetectarSuscripcionVencida() {
-        Suscripcion sub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        sub.activar(LocalDate.now().minusDays(1)); // Venció ayer
-        
-        assertTrue(sub.estaVencida());
+    void debeMarcarVencidaLuegoSuspender() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.ALMACEN, 3L);
+        s.marcarVencida();
+        assertEquals(EstadoSuscripcion.VENCIDA, s.getEstado());
+        s.suspenderPorFaltaDePago();
+        assertEquals(EstadoSuscripcion.SUSPENDIDA, s.getEstado());
     }
 
     @Test
-    void debeProgramarYAplicarCambioDePlan() {
-        Suscripcion sub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        
-        sub.programarCambioPlan(2L);
-        assertEquals(2L, sub.getPlanProgramadoId());
-        assertEquals(1L, sub.getPlanId()); // Aún no cambia
-        
-        sub.aplicarCambioPlan();
-        assertEquals(2L, sub.getPlanId()); // Ahora sí
-        assertNull(sub.getPlanProgramadoId());
+    void cancelarRenovacionEsIdempotente() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        s.cancelarRenovacion();
+        s.cancelarRenovacion(); // no debe lanzar
+        assertFalse(s.isAutoRenovacion());
     }
 
     @Test
-    void debePermitirModificarEstadoYPreapproval() {
-        Suscripcion sub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        
-        sub.setEstado(EstadoSuscripcion.CANCELADA);
-        sub.setPreapprovalIdMp("PRE-123");
-        sub.setPlanId(3L);
-        
-        assertEquals(EstadoSuscripcion.CANCELADA, sub.getEstado());
-        assertEquals("PRE-123", sub.getPreapprovalIdMp());
-        assertEquals(3L, sub.getPlanId());
+    void programarYAplicarCambioPlan() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        s.programarCambioPlan(2L);
+        assertEquals(2L, s.getPlanProgramadoId());
+        assertEquals(1L, s.getPlanId());
+        s.aplicarCambioPlan();
+        assertEquals(2L, s.getPlanId());
+        assertNull(s.getPlanProgramadoId());
     }
+
+    @Test
+    void revertirAPlanGratuitoDebeResetear() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 2L);
+        s.revertirAPlanGratuito(1L);
+        assertEquals(1L, s.getPlanId());
+        assertEquals(EstadoSuscripcion.SUSPENDIDA, s.getEstado());
+        assertFalse(s.isAutoRenovacion());
+        assertEquals(LocalDate.now(), s.getFechaFin());
+    }
+
+    @Test
+void activarSinFechaInicioPreviaDebeSetearHoy() {
+    Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+    s.activar(LocalDate.now().plusMonths(1));
+    assertEquals(LocalDate.now(), s.getFechaInicio());
+}
+
+@Test
+void renovarSinFechaInicioDebeSetearHoy() {
+    Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+    s.renovar();
+    assertEquals(LocalDate.now(), s.getFechaInicio());
+    assertEquals(EstadoSuscripcion.ACTIVA, s.getEstado());
+}
+
+@Test
+void rehidratarConPlanProgramadoDebeConservarlo() {
+    Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+    s.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(),
+            LocalDate.now().plusMonths(1), true, "PRE-1", 2L);
+    assertEquals(2L, s.getPlanProgramadoId());
+    assertEquals("PRE-1", s.getPreapprovalIdMp());
+}
+
+@Test
+void aplicarCambioPlanSinPlanProgramadoNoCambia() {
+    Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+    s.aplicarCambioPlan();
+    assertEquals(1L, s.getPlanId());
+}
 }

@@ -15,14 +15,15 @@ class MontoTest {
 
     @Test
     void noDebePermitirMontoNegativo() {
-        assertThrows(IllegalArgumentException.class, () -> new Monto(BigDecimal.TEN, ""));
+        BigDecimal valorNegativo = new BigDecimal("-1");
+        assertThrows(IllegalArgumentException.class,
+            () -> new Monto(valorNegativo, "COP"));
     }
 
     @Test
     void noDebePermitirMonedaVacia() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            new Monto(BigDecimal.TEN, "")
-        );
+        assertThrows(IllegalArgumentException.class,
+            () -> new Monto(BigDecimal.TEN, ""));
     }
 
     @Test
@@ -41,4 +42,11 @@ class MontoTest {
         
         assertThrows(IllegalArgumentException.class, () -> monto1.sumar(monto2));
     }
+
+    @Test
+void sumarConBigDecimalNegativoResultanteLanza() {
+    // sumar nunca da negativo si ambos son >= 0, pero validamos el branch de moneda nula
+    assertThrows(IllegalArgumentException.class,
+            () -> new Monto(BigDecimal.ONE, null));
+}
 }

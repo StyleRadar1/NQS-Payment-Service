@@ -38,25 +38,30 @@ public class OrdenPago {
         this.estado = EstadoPago.RECHAZADO;
     }
 
-        public void reembolsar(Monto montoReembolso, String motivo) {
+    public void reembolsar(Monto montoReembolso, String motivo) {
         if (this.estado != EstadoPago.APROBADO && this.estado != EstadoPago.REEMBOLSADO) {
             throw new IllegalStateException("Solo se reembolsan pagos aprobados");
         }
-        
-        // Sumar el nuevo monto al ya reembolsado
-        Monto nuevoTotalReembolsado = this.montoReembolsado.sumar(montoReembolso);
-        
-        if (nuevoTotalReembolsado.valor().compareTo(this.monto.valor()) > 0) {
+        Monto nuevoTotal = this.montoReembolsado.sumar(montoReembolso);
+        if (nuevoTotal.valor().compareTo(this.monto.valor()) > 0) {
             throw new IllegalArgumentException("El monto total a reembolsar supera el monto original");
         }
-        
-        this.montoReembolsado = nuevoTotalReembolsado;
+        this.montoReembolsado = nuevoTotal;
         this.motivoReembolso = motivo;
-        
-        // Si ya se reembolsó el 100%, cambia el estado
         if (this.montoReembolsado.valor().compareTo(this.monto.valor()) == 0) {
             this.estado = EstadoPago.REEMBOLSADO;
         }
+    }
+
+    /** Fix B4: restaura estado y datos de reembolso al leer de BD. */
+    public void rehidratar(EstadoPago estado, Monto montoReembolsado, String motivoReembolso) {
+        this.estado = estado;
+        this.montoReembolsado = montoReembolsado != null ? montoReembolsado : this.montoReembolsado;
+        this.motivoReembolso = motivoReembolso;
+    }
+
+    public boolean fueReembolsadoTotalmente() {
+        return this.montoReembolsado.valor().compareTo(this.monto.valor()) == 0;
     }
 
     public Long getId() { return id; }

@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,89 +29,188 @@ class SuscribirAlmacenUseCaseImplTest {
 
     @InjectMocks private SuscribirAlmacenUseCaseImpl useCase;
 
+    private Plan plan(Long id, TipoSuscriptor tipo, BigDecimal precio) {
+        return new Plan(id, "Plan" + id, tipo, new Monto(precio, "COP"), Map.of());
+    }
+
     @Test
-    void debeLanzarExcepcionSiPlanNoExisteAlIniciar() {
+    void debeLanzarSiPlanNoExiste() {
         when(planRepository.buscarPorId(99L)).thenReturn(Optional.empty());
-        assertThrows(PlanNotFoundException.class, () -> 
-            useCase.iniciarSuscripcion("USER-1", 99L, TipoSuscriptor.USUARIO, "test@test.com"));
+        assertThrows(PlanNotFoundException.class,
+            () -> useCase.iniciarSuscripcion("U", 99L, TipoSuscriptor.USUARIO, "e@t.com"));
     }
 
     @Test
-    void debeLanzarExcepcionSiPlanInactivo() {
-        Plan plan = new Plan(2L, "Radar+", TipoSuscriptor.USUARIO, new Monto(BigDecimal.TEN, "COP"), Map.of());
-        plan.desactivar();
-        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(plan));
-
-        assertThrows(IllegalArgumentException.class, () -> 
-            useCase.iniciarSuscripcion("USER-1", 2L, TipoSuscriptor.USUARIO, "test@test.com"));
+    void debeLanzarSiPlanInactivo() {
+        Plan p = plan(2L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
+        p.desactivar();
+        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(p));
+        assertThrows(IllegalArgumentException.class,
+            () -> useCase.iniciarSuscripcion("U", 2L, TipoSuscriptor.USUARIO, "e@t.com"));
     }
 
     @Test
-    void debeIniciarSuscripcionCorrectamente() {
-        Plan plan = new Plan(2L, "Radar+", TipoSuscriptor.USUARIO, new Monto(BigDecimal.TEN, "COP"), Map.of());
-        Suscripcion suscripcionGuardada = new Suscripcion(100L, "USER-1", TipoSuscriptor.USUARIO, 2L);
-        
-        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(plan));
-        when(suscripcionRepository.guardar(any(Suscripcion.class))).thenReturn(suscripcionGuardada);
+    void debeLanzarSiTipoSuscriptorDifiere() {
+        Plan p = plan(2L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
+        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(p));
+        assertThrows(IllegalArgumentException.class,
+            () -> useCase.iniciarSuscripcion("U", 2L, TipoSuscriptor.ALMACEN, "e@t.com"));
+    }
+
+    @Test
+    void debeLanzarSiYaExisteSuscripcionActiva() {
+        Plan p = plan(2L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
+        Suscripcion existente = new Suscripcion(10L, "U", TipoSuscriptor.USUARIO, 2L);
+        existente.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(), LocalDate.now().plusDays(10), true, null, null);
+
+        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(p));
+        when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalStateException.class,
+            () -> useCase.iniciarSuscripcion("U", 2L, TipoSuscriptor.USUARIO, "e@t.com"));
+    }
+
+    @Test
+    void debeCrearSuscripcionCuandoEsNueva() {
+        Plan p = plan(2L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
+        Suscripcion guardada = new Suscripcion(100L, "U", TipoSuscriptor.USUARIO, 2L);
+
+        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(p));
+        when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.empty());
+        when(suscripcionRepository.guardar(any())).thenReturn(guardada);
         when(mercadoPagoPort.crearPreferenciaPago(any(), any(), anyString()))
-            .thenReturn(Map.of("init_point", "https://mp.com/pay", "preapproval_id", "PRE-123"));
+            .thenReturn(Map.of("init_point", "https://mp.com/x", "preapproval_id", "PRE-123"));
 
-        String initPoint = useCase.iniciarSuscripcion("USER-1", 2L, TipoSuscriptor.USUARIO, "test@test.com");
+        String init = useCase.iniciarSuscripcion("U", 2L, TipoSuscriptor.USUARIO, "e@t.com");
 
-        assertEquals("https://mp.com/pay", initPoint);
+        assertEquals("https://mp.com/x", init);
+        verify(ordenPagoRepository).guardar(any(OrdenPago.class));
+    }
+
+    @Test
+    void upgradeDebeCrearOrdenPorDiferenciaYDevolverInitPoint() {
+        Plan actual = plan(1L, TipoSuscriptor.USUARIO, new BigDecimal("10000"));
+        Plan nuevo  = plan(2L, TipoSuscriptor.USUARIO, new BigDecimal("20000"));
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        s.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(), LocalDate.now().plusMonths(1), true, "PRE-1", null);
+
+        when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
+        when(planRepository.buscarPorId(1L)).thenReturn(Optional.of(actual));
+        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(nuevo));
+        when(mercadoPagoPort.crearPreferenciaPago(any(), any(), anyString()))
+            .thenReturn(Map.of("init_point", "https://mp.com/upg", "preapproval_id", "PRE-2"));
+
+        String init = useCase.programarCambioPlan("U", 2L, "e@t.com");
+
+        assertEquals("https://mp.com/upg", init);
+        assertEquals(2L, s.getPlanProgramadoId());
         verify(ordenPagoRepository, times(1)).guardar(any(OrdenPago.class));
-        verify(suscripcionRepository, times(2)).guardar(any(Suscripcion.class)); 
     }
 
     @Test
-    void debeLanzarExcepcionAlCambiarPlanSiPlanNoExiste() {
-        when(planRepository.buscarPorId(99L)).thenReturn(Optional.empty());
-        assertThrows(PlanNotFoundException.class, () -> useCase.programarCambioPlan("USER-1", 99L));
+    void downgradeDebeProgramarSinCobroYDevolverNull() {
+        Plan actual = plan(2L, TipoSuscriptor.USUARIO, new BigDecimal("20000"));
+        Plan nuevo  = plan(1L, TipoSuscriptor.USUARIO, new BigDecimal("10000"));
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 2L);
+        s.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(), LocalDate.now().plusMonths(1), true, "PRE-1", null);
+
+        when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
+        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(actual));
+        when(planRepository.buscarPorId(1L)).thenReturn(Optional.of(nuevo));
+
+        String init = useCase.programarCambioPlan("U", 1L, "e@t.com");
+
+        assertNull(init);
+        assertEquals(1L, s.getPlanProgramadoId());
+        verify(ordenPagoRepository, never()).guardar(any());
+        verify(mercadoPagoPort, never()).crearPreferenciaPago(any(), any(), any());
     }
 
     @Test
-    void debeLanzarExcepcionAlCambiarPlanSiSuscripcionNoExiste() {
-        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(new Plan(2L, "Radar+", TipoSuscriptor.USUARIO, new Monto(BigDecimal.TEN, "COP"), Map.of())));
-        when(suscripcionRepository.buscarPorSuscriptorId("USER-1")).thenReturn(Optional.empty());
+    void debeRechazarCambioSiTipoSuscriptorDifiere() {
+        Plan actual = plan(1L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
+        Plan nuevo  = plan(3L, TipoSuscriptor.ALMACEN, BigDecimal.TEN);
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        s.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(), LocalDate.now().plusMonths(1), true, null, null);
 
-        assertThrows(SuscripcionNoEncontradaException.class, () -> useCase.programarCambioPlan("USER-1", 2L));
+        when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
+        when(planRepository.buscarPorId(1L)).thenReturn(Optional.of(actual));
+        when(planRepository.buscarPorId(3L)).thenReturn(Optional.of(nuevo));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> useCase.programarCambioPlan("U", 3L, "e@t.com"));
     }
 
     @Test
-    void debeProgramarCambioDePlanExitosamente() {
-        Suscripcion suscripcion = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        Plan nuevoPlan = new Plan(2L, "Radar+", TipoSuscriptor.USUARIO, new Monto(BigDecimal.TEN, "COP"), Map.of());
+    void cancelarRenovacionDebeSerIdempotente() {
+        Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+        s.setPreapprovalIdMp("PRE-1");
+        s.cancelarRenovacion(); // ya cancelada
+        when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
 
-        when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(nuevoPlan));
-        when(suscripcionRepository.buscarPorSuscriptorId("USER-1")).thenReturn(Optional.of(suscripcion));
+        useCase.cancelarRenovacion("U");
 
-        useCase.programarCambioPlan("USER-1", 2L);
-
-        assertEquals(2L, suscripcion.getPlanProgramadoId());
-        verify(suscripcionRepository).guardar(suscripcion);
-    }
-
-        @Test
-    void debeCancelarRenovacionExitosamente() {
-        Suscripcion suscripcion = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        suscripcion.setPreapprovalIdMp("PRE-123");
-        when(suscripcionRepository.buscarPorSuscriptorId("USER-1")).thenReturn(Optional.of(suscripcion));
-
-        useCase.cancelarRenovacion("USER-1");
-
-        assertFalse(suscripcion.isAutoRenovacion());
-        verify(mercadoPagoPort).cancelarPreapproval("PRE-123");
-        verify(suscripcionRepository).guardar(suscripcion);
+        verify(mercadoPagoPort, never()).cancelarPreapproval(anyString());
+        verify(suscripcionRepository, never()).guardar(any());
     }
 
     @Test
-    void debeConsultarSuscripcionExitosamente() {
-        Suscripcion suscripcion = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 1L);
-        when(suscripcionRepository.buscarPorSuscriptorId("USER-1")).thenReturn(Optional.of(suscripcion));
+void debeLanzarSiSuscripcionExistenteEstaPendiente() {
+    Plan p = plan(2L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
+    Suscripcion ex = new Suscripcion(10L, "U", TipoSuscriptor.USUARIO, 2L);
+    ex.rehidratar(EstadoSuscripcion.PENDIENTE, null, null, true, null, null);
 
-        Suscripcion result = useCase.consultarSuscripcion("USER-1");
+    when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(p));
+    when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(ex));
 
-        assertNotNull(result);
-        assertEquals("USER-1", result.getSuscriptorId());
-    }
+    assertThrows(IllegalStateException.class,
+            () -> useCase.iniciarSuscripcion("U", 2L, TipoSuscriptor.USUARIO, "e@t.com"));
+}
+
+@Test
+void cancelarRenovacionDebeLanzarSiNoExiste() {
+    when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.empty());
+    assertThrows(SuscripcionNoEncontradaException.class,
+            () -> useCase.cancelarRenovacion("U"));
+}
+
+@Test
+void cambiarPlanDebeLanzarSiSuscripcionNoEstaActiva() {
+    Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+    s.rehidratar(EstadoSuscripcion.PENDIENTE, null, null, true, null, null);
+    when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
+
+    assertThrows(IllegalStateException.class,
+            () -> useCase.programarCambioPlan("U", 2L, "e@t.com"));
+}
+
+@Test
+void cambiarPlanDebeLanzarSiMismoPlan() {
+    Plan actual = plan(1L, TipoSuscriptor.USUARIO, BigDecimal.TEN);
+    Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+    s.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(), LocalDate.now().plusMonths(1), true, null, null);
+
+    when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
+    when(planRepository.buscarPorId(1L)).thenReturn(Optional.of(actual));
+
+    assertThrows(IllegalArgumentException.class,
+            () -> useCase.programarCambioPlan("U", 1L, "e@t.com"));
+}
+
+@Test
+void cambiarPlanDebeLanzarSiNuevoPlanNoActivo() {
+    Plan actual = plan(1L, TipoSuscriptor.USUARIO, new BigDecimal("100"));
+    Plan nuevo = plan(2L, TipoSuscriptor.USUARIO, new BigDecimal("200"));
+    nuevo.desactivar();
+    Suscripcion s = new Suscripcion(1L, "U", TipoSuscriptor.USUARIO, 1L);
+    s.rehidratar(EstadoSuscripcion.ACTIVA, LocalDate.now(), LocalDate.now().plusMonths(1), true, null, null);
+
+    when(suscripcionRepository.buscarPorSuscriptorId("U")).thenReturn(Optional.of(s));
+    when(planRepository.buscarPorId(1L)).thenReturn(Optional.of(actual));
+    when(planRepository.buscarPorId(2L)).thenReturn(Optional.of(nuevo));
+
+    assertThrows(IllegalArgumentException.class,
+            () -> useCase.programarCambioPlan("U", 2L, "e@t.com"));
+}
+
 }

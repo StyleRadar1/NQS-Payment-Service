@@ -24,23 +24,21 @@ class SuscripcionSchedulerTest {
     @InjectMocks private SuscripcionScheduler scheduler;
 
     @Test
-    void debeProcesarSuscripcionesVencidasCorrectamente() {
-        Suscripcion userSub = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 2L);
-        Suscripcion storeSub = new Suscripcion(2L, "STORE-1", TipoSuscriptor.ALMACEN, 3L);
-        
+    void debeRegistrarVencidaYLuegoSuspender() {
+        Suscripcion usuario = new Suscripcion(1L, "U1", TipoSuscriptor.USUARIO, 2L);
+        Suscripcion almacen = new Suscripcion(2L, "A1", TipoSuscriptor.ALMACEN, 3L);
+
         when(suscripcionRepository.buscarVencidas(any(LocalDate.class)))
-                .thenReturn(List.of(userSub, storeSub));
+            .thenReturn(List.of(usuario, almacen));
 
         scheduler.revisarSuscripcionesVencidas();
 
-        // Usuario pasa a plan gratis (ID 1) y se suspende
-        assertEquals(1L, userSub.getPlanId());
-        assertEquals(EstadoSuscripcion.SUSPENDIDA, userSub.getEstado());
-        
-        // Almacén se suspende
-        assertEquals(EstadoSuscripcion.SUSPENDIDA, storeSub.getEstado());
+        assertEquals(1L, usuario.getPlanId());               // degradado a gratuito
+        assertEquals(EstadoSuscripcion.SUSPENDIDA, usuario.getEstado());
+        assertEquals(EstadoSuscripcion.SUSPENDIDA, almacen.getEstado());
 
-        verify(suscripcionRepository, times(2)).guardar(any());
+        // cada uno guarda dos veces (VENCIDA + SUSPENDIDA)
+        verify(suscripcionRepository, times(4)).guardar(any());
         verify(eventPublisher, times(2)).publicarSuscripcionSuspendida(any());
     }
 }

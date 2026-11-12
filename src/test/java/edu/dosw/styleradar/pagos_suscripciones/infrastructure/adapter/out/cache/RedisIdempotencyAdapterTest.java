@@ -11,36 +11,51 @@ import org.springframework.data.redis.core.ValueOperations;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RedisIdempotencyAdapterTest {
 
     @Mock private StringRedisTemplate redisTemplate;
-    @Mock private ValueOperations<String, String> valueOperations;
+    @Mock private ValueOperations<String, String> ops;
     @InjectMocks private RedisIdempotencyAdapter adapter;
 
     @Test
-    void debeAdquirirLockExitosamente() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(true);
+    void debeAdquirirLockConKeyQueYaTienePrefijo() {
+        when(redisTemplate.opsForValue()).thenReturn(ops);
+        when(ops.setIfAbsent(eq("lock:pago_MP-123"), anyString(), any(Duration.class)))
+                .thenReturn(true);
+
+        assertTrue(adapter.adquirirLock("lock:pago_MP-123"));
+    }
+
+    @Test
+    void debeAgregarPrefijoSiKeyNoLoTrae() {
+        when(redisTemplate.opsForValue()).thenReturn(ops);
+        when(ops.setIfAbsent(eq("lock:pago_MP-123"), anyString(), any(Duration.class)))
+                .thenReturn(true);
 
         assertTrue(adapter.adquirirLock("MP-123"));
     }
 
     @Test
     void noDebeAdquirirLockSiYaExiste() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(false);
+        when(redisTemplate.opsForValue()).thenReturn(ops);
+        when(ops.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(false);
 
         assertFalse(adapter.adquirirLock("MP-123"));
     }
 
     @Test
-    void debeLiberarLock() {
+    void debeLiberarLockConKeyQueYaTienePrefijo() {
+        adapter.liberarLock("lock:pago_MP-123");
+        verify(redisTemplate).delete("lock:pago_MP-123");
+    }
+
+    @Test
+    void debeLiberarLockAgregandoPrefijoSiFalta() {
         adapter.liberarLock("MP-123");
-        verify(redisTemplate).delete("lock:webhook:MP-123");
+        verify(redisTemplate).delete("lock:pago_MP-123");
     }
 }

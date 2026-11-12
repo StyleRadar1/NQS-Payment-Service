@@ -19,12 +19,15 @@ public class RabbitMQConfig {
     // Creamos una cola de prueba y la enlazamos. Así el exchange se crea obligatoriamente.
     @Bean
     public Declarables topicBindings() {
-        TopicExchange topicExchange = new TopicExchange(EXCHANGE);
-        Queue queue = new Queue("demo.queue", false); // Cola de prueba
+        TopicExchange exchange = new TopicExchange(EXCHANGE);
+        Queue pagoQueue = new Queue("demo.pago.confirmado.queue", false);
+        Queue suspQueue = new Queue("demo.suscripcion.suspendida.queue", false);
         return new Declarables(
-            topicExchange,
-            queue,
-            BindingBuilder.bind(queue).to(topicExchange).with(RK_PAGO_CONFIRMADO)
+            exchange,
+            pagoQueue,
+            suspQueue,
+            BindingBuilder.bind(pagoQueue).to(exchange).with(RK_PAGO_CONFIRMADO),
+            BindingBuilder.bind(suspQueue).to(exchange).with(RK_SUSCRIPCION_SUSPENDIDA)
         );
     }
 

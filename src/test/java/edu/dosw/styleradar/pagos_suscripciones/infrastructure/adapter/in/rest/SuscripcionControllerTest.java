@@ -11,45 +11,37 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(SuscripcionController.class) // Solo levanta este controlador
+@WebMvcTest(SuscripcionController.class)
 class SuscripcionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private SuscripcionPort suscripcionPort; // Simulamos el caso de uso
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private MockMvc mockMvc;
+    @MockBean private SuscripcionPort suscripcionPort;
+    @Autowired private ObjectMapper objectMapper;
 
     @Test
     void debeIniciarSuscripcionYRetornarLink() throws Exception {
-        SuscripcionController.CrearSuscripcionRequest request = new SuscripcionController.CrearSuscripcionRequest(
-                "USER-1", 2L, "USUARIO", "test@test.com"
-        );
+        SuscripcionController.CrearSuscripcionRequest req =
+            new SuscripcionController.CrearSuscripcionRequest(
+                "USER-1", 2L, "USUARIO", "test@test.com");
 
         when(suscripcionPort.iniciarSuscripcion("USER-1", 2L, TipoSuscriptor.USUARIO, "test@test.com"))
                 .thenReturn("https://mercadopago.com/checkout");
 
         mockMvc.perform(post("/api/v1/suscripciones/iniciar")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("https://mercadopago.com/checkout"));
     }
 
     @Test
     void debeConsultarSuscripcion() throws Exception {
-        Suscripcion suscripcion = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 2L);
-        when(suscripcionPort.consultarSuscripcion("USER-1")).thenReturn(suscripcion);
+        Suscripcion s = new Suscripcion(1L, "USER-1", TipoSuscriptor.USUARIO, 2L);
+        when(suscripcionPort.consultarSuscripcion("USER-1")).thenReturn(s);
 
         mockMvc.perform(get("/api/v1/suscripciones/USER-1"))
                 .andExpect(status().isOk())
@@ -61,5 +53,39 @@ class SuscripcionControllerTest {
     void debeCancelarRenovacion() throws Exception {
         mockMvc.perform(post("/api/v1/suscripciones/USER-1/cancelar"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void cambiarPlanUpgradeDebeRetornarInitPoint() throws Exception {
+        when(suscripcionPort.programarCambioPlan("USER-1", 3L, "test@test.com"))
+                .thenReturn("https://mp.com/upgrade");
+
+        mockMvc.perform(put("/api/v1/suscripciones/USER-1/cambiar-plan")
+                .param("nuevoPlanId", "3")
+                .param("emailPayer", "test@test.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipo").value("UPGRADE"))
+                .andExpect(jsonPath("$.init_point").value("https://mp.com/upgrade"));
+    }
+
+    @Test
+    void cambiarPlanDowngradeNoDebeRetornarInitPoint() throws Exception {
+        when(suscripcionPort.programarCambioPlan("USER-1", 1L, "test@test.com"))
+                .thenReturn(null); // downgrade devuelve null
+
+        mockMvc.perform(put("/api/v1/suscripciones/USER-1/cambiar-plan")
+                .param("nuevoPlanId", "1")
+                .param("emailPayer", "test@test.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipo").value("DOWNGRADE"))
+                .andExpect(jsonPath("$.init_point").doesNotExist())
+                .andExpect(jsonPath("$.mensaje").exists());
+    }
+
+    @Test
+    void cambiarPlanDebeRequerirEmailPayer() throws Exception {
+        mockMvc.perform(put("/api/v1/suscripciones/USER-1/cambiar-plan")
+                .param("nuevoPlanId", "3"))
+                .andExpect(status().isBadRequest());
     }
 }

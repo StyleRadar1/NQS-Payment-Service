@@ -43,7 +43,13 @@ public class WebhookController {
         }
 
         log.info("Webhook recibido. ID: {}, Estado: {}, Tipo: {}", idExterno, payload.getAction(), payload.getType());
-        webhookPort.procesarNotificacionPago(idExterno, payload.getAction(), payload.getType());
+        String payloadJson;
+        try {
+            payloadJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
+        } catch (Exception e) {
+            payloadJson = "{}";
+        }
+        webhookPort.procesarNotificacionPago(idExterno, payload.getAction(), payload.getType(), payloadJson);
         
         return ResponseEntity.ok().build();
     }

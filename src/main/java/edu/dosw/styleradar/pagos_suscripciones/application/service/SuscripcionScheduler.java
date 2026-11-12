@@ -1,7 +1,7 @@
 package edu.dosw.styleradar.pagos_suscripciones.application.service;
 
-import edu.dosw.styleradar.pagos_suscripciones.domain.model.EstadoSuscripcion;
-import edu.dosw.styleradar.pagos_suscripciones.domain.model.Suscripcion;
+import edu.dosw.styleradar.pagos_suscripciones.application.dto.event.SuscripcionSuspendidaEvent;
+import edu.dosw.styleradar.pagos_suscripciones.domain.model.*;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.EventPublisherPort;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.SuscripcionRepositoryPort;
 import lombok.RequiredArgsConstructor;
@@ -11,38 +11,53 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SuscripcionScheduler {
 
+    private static final Long PLAN_GRATUITO_ID = 1L;
+
     private final SuscripcionRepositoryPort suscripcionRepository;
     private final EventPublisherPort eventPublisher;
 
-    // Se ejecuta todos los días a las 00:00
     @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void revisarSuscripcionesVencidas() {
-        log.info("Iniciando revisión diaria de suscripciones vencidas...");
-        
+        log.info("Revisión diaria de suscripciones vencidas...");
         List<Suscripcion> vencidas = suscripcionRepository.buscarVencidas(LocalDate.now());
-        
-        for (Suscripcion suscripcion : vencidas) {
-            log.warn("Suscripción vencida detectada para suscriptor: {}", suscripcion.getSuscriptorId());
-            
-            if (suscripcion.getTipoSuscriptor().name().equals("USUARIO")) {
-                // SR-RF-103: Revertir a plan gratuito (ID 1)
-                suscripcion.revertirAPlanGratuito(1L);
+
+        for (Suscripcion s : vencidas) {
+            log.warn("Suscripción vencida: suscriptor={}, planAnterior={}", s.getSuscriptorId(), s.getPlanId());
+            Long planAnterior = s.getPlanId();
+
+            s.marcarVencida();
+            suscripcionRepository.guardar(s);
+
+            if (s.getTipoSuscriptor() == TipoSuscriptor.USUARIO) {
+                s.revertirAPlanGratuito(PLAN_GRATUITO_ID);   // SR-RF-103
             } else {
-                // SR-RF-99: Suspender catálogo de almacén
-                suscripcion.suspenderPorFaltaDePago();
+                s.suspenderPorFaltaDePago();                  // SR-RF-99
             }
-            
-            suscripcionRepository.guardar(suscripcion);
-            // Notificar a ms-tiendas / ms-usuarios para que revoquen beneficios
-            eventPublisher.publicarSuscripcionSuspendida(suscripcion);
+            suscripcionRepository.guardar(s);
+
+            SuscripcionSuspendidaEvent evt = new SuscripcionSuspendidaEvent(
+                UUID.randomUUID().toString(),
+                SuscripcionSuspendidaEvent.TYPE,
+                SuscripcionSuspendidaEvent.VERSION,
+                LocalDateTime.now(),
+                s.getId(),
+                s.getSuscriptorId(),
+                s.getTipoSuscriptor(),
+                planAnterior,
+                s.getPlanId(),
+                "Suscripción vencida sin pago aprobado"
+            );
+            eventPublisher.publicarSuscripcionSuspendida(evt);
         }
     }
 }

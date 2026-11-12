@@ -7,5 +7,5 @@ public interface WebhookPort {
      * @param estadoPago El nuevo estado del pago (APPROVED, REJECTED, etc.).
      * @param tipoEvento El tipo de evento notificado.
      */
-    void procesarNotificacionPago(String idPagoExterno, String estadoPago, String tipoEvento);
+    void procesarNotificacionPago(String idPagoExterno, String accion, String tipoEvento, String payloadJson);
 }

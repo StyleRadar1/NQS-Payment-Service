@@ -1,7 +1,6 @@
 package edu.dosw.styleradar.pagos_suscripciones.domain.port.out;
 
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.Suscripcion;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

@@ -7,10 +7,9 @@ import edu.dosw.styleradar.pagos_suscripciones.infrastructure.adapter.out.persis
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -35,48 +34,42 @@ public class SuscripcionPersistenceAdapter implements SuscripcionRepositoryPort 
         return repository.findBySuscriptorId(suscriptorId).map(this::toDomain);
     }
 
-    private SuscripcionEntity toEntity(Suscripcion domain) {
-        SuscripcionEntity entity = new SuscripcionEntity();
-        entity.setId(domain.getId());
-        entity.setSuscriptorId(domain.getSuscriptorId());
-        entity.setTipoSuscriptor(domain.getTipoSuscriptor());
-        entity.setPlanId(domain.getPlanId());
-        entity.setPlanProgramadoId(domain.getPlanProgramadoId());
-        entity.setEstado(domain.getEstado());
-        entity.setFechaInicio(domain.getFechaInicio());
-        entity.setFechaFin(domain.getFechaFin());
-        entity.setAutoRenovacion(domain.isAutoRenovacion());
-        entity.setPreapprovalIdMp(domain.getPreapprovalIdMp());
-        return entity;
-    }
-
-    private Suscripcion toDomain(SuscripcionEntity entity) {
-        Suscripcion domain = new Suscripcion(
-                entity.getId(),
-                entity.getSuscriptorId(),
-                entity.getTipoSuscriptor(),
-                entity.getPlanId()
-        );
-        if (entity.getFechaFin() != null) {
-            domain.activar(entity.getFechaFin());
-        } else {
-            domain.setEstado(entity.getEstado());
-        }
-        if (!entity.isAutoRenovacion()) {
-            domain.cancelarRenovacion();
-        }
-        domain.setPreapprovalIdMp(entity.getPreapprovalIdMp());
-        return domain;
-    }
     @Override
     public List<Suscripcion> buscarVencidas(LocalDate fecha) {
-        return repository.findVencidas(fecha).stream()
-                .map(this::toDomain)
-                .toList();
+        return repository.findVencidas(fecha).stream().map(this::toDomain).toList();
     }
 
     @Override
     public Optional<Suscripcion> buscarPorPreapprovalId(String preapprovalId) {
         return repository.findByPreapprovalIdMp(preapprovalId).map(this::toDomain);
+    }
+
+    private SuscripcionEntity toEntity(Suscripcion d) {
+        SuscripcionEntity e = new SuscripcionEntity();
+        e.setId(d.getId());
+        e.setSuscriptorId(d.getSuscriptorId());
+        e.setTipoSuscriptor(d.getTipoSuscriptor());
+        e.setPlanId(d.getPlanId());
+        e.setPlanProgramadoId(d.getPlanProgramadoId());
+        e.setEstado(d.getEstado());
+        e.setFechaInicio(d.getFechaInicio());
+        e.setFechaFin(d.getFechaFin());
+        e.setAutoRenovacion(d.isAutoRenovacion());
+        e.setPreapprovalIdMp(d.getPreapprovalIdMp());
+        return e;
+    }
+
+    private Suscripcion toDomain(SuscripcionEntity e) {
+        Suscripcion d = new Suscripcion(e.getId(), e.getSuscriptorId(),
+                                         e.getTipoSuscriptor(), e.getPlanId());
+        d.rehidratar(
+            e.getEstado(),
+            e.getFechaInicio(),
+            e.getFechaFin(),
+            e.isAutoRenovacion(),
+            e.getPreapprovalIdMp(),
+            e.getPlanProgramadoId()
+        );
+        return d;
     }
 }

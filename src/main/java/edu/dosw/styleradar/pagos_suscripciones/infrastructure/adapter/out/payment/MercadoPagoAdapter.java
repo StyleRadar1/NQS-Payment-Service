@@ -14,9 +14,14 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@Profile("!dev")
+@Profile("!dev & !test")
 @RequiredArgsConstructor
 public class MercadoPagoAdapter implements MercadoPagoPort {
+
+    // --- Constantes de claves de respuesta MP ---
+    private static final String KEY_INIT_POINT = "init_point";
+    private static final String KEY_PREAPPROVAL_ID = "preapproval_id";
+    private static final String MP_KEY_ID = "id";
 
     private final MercadoPagoFeignClient feignClient;
 
@@ -26,49 +31,59 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
     @Value("${mercadopago.webhook-url}")
     private String webhookUrl;
 
-    private String getAuthHeader() {
-        return "Bearer " + accessToken;
-    }
+    private String auth() { return "Bearer " + accessToken; }
 
     @Override
     public Map<String, String> crearPreferenciaPago(OrdenPago orden, Suscripcion suscripcion, String emailPayer) {
-        Map<String, Object> request = new HashMap<>();
-        request.put("reason", "Suscripción StyleRadar - Plan " + suscripcion.getPlanId());
-        request.put("external_reference", suscripcion.getId().toString());
-        request.put("payer_email", emailPayer);
-        request.put("status", "pending");
-        
-        // ¡ESTA ES LA LÍNEA MÁGICA QUE PIDE EL PROFESOR!
-        request.put("notification_url", webhookUrl);
-
-        request.put("back_url", "https://styleradar.com/suscripcion/resultado");
-        request.put("auto_recurring", Map.of(
+        Map<String, Object> req = new HashMap<>();
+        req.put("reason", "Suscripción StyleRadar - Plan " + suscripcion.getPlanId());
+        req.put("external_reference", suscripcion.getId().toString());
+        req.put("payer_email", emailPayer);
+        req.put("status", "pending");
+        req.put("notification_url", webhookUrl);
+        req.put("back_url", "https://styleradar.com/suscripcion/resultado");
+        req.put("auto_recurring", Map.of(
                 "frequency", 1,
                 "frequency_type", "months",
                 "transaction_amount", orden.getMonto().valor(),
-                "currency_id", orden.getMonto().moneda()
-        ));
+                "currency_id", orden.getMonto().moneda()));
 
-        Map<String, Object> response = feignClient.crearPreapproval(getAuthHeader(), request);
-        
-        String initPoint = (String) response.get("init_point");
-        String preapprovalId = (String) response.get("id");
-        
+        Map<String, Object> resp = feignClient.crearPreapproval(auth(), req);
+
+        if (resp == null) {
+            log.warn("MP devolvió null para preapproval de la orden {}", orden.getId());
+            return Map.of(KEY_INIT_POINT, "", KEY_PREAPPROVAL_ID, "");
+        }
+
+        String initPoint = (String) resp.get(KEY_INIT_POINT);
+        String preapprovalId = (String) resp.get(MP_KEY_ID);
         return Map.of(
-                "init_point", initPoint != null ? initPoint : "",
-                "preapproval_id", preapprovalId != null ? preapprovalId : ""
+            KEY_INIT_POINT, initPoint != null ? initPoint : "",
+            KEY_PREAPPROVAL_ID, preapprovalId != null ? preapprovalId : ""
         );
     }
 
     @Override
     public void cancelarPreapproval(String preapprovalId) {
-        feignClient.cancelarPreapproval(getAuthHeader(), preapprovalId);
+        feignClient.cancelarPreapproval(auth(), preapprovalId);
     }
 
     @Override
     public void reembolsarPago(String idPagoExterno, String monto) {
-        log.info("Solicitando reembolso real a Mercado Pago para pago: {}", idPagoExterno);
-        Map<String, Object> request = Map.of("amount", Double.parseDouble(monto));
-        feignClient.reembolsarPago(getAuthHeader(), idPagoExterno, request);
+        log.info("Reembolso real a MP para pago {}: {}", idPagoExterno, monto);
+        Map<String, Object> req = Map.of("amount", Double.parseDouble(monto));
+        feignClient.reembolsarPago(auth(), idPagoExterno, req);
+    }
+
+    @Override
+    public String consultarEstadoPago(String idPagoExterno) {
+        try {
+            Map<String, Object> pago = feignClient.consultarPago(auth(), idPagoExterno);
+            Object status = pago != null ? pago.get("status") : null;
+            return status != null ? status.toString() : null;
+        } catch (Exception e) {
+            log.error("Error consultando pago {} en MP: {}", idPagoExterno, e.getMessage());
+            return null;
+        }
     }
 }
