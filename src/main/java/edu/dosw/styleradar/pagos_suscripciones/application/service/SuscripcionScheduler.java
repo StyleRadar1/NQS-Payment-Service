@@ -25,6 +25,17 @@ public class SuscripcionScheduler {
     private final SuscripcionRepositoryPort suscripcionRepository;
     private final EventPublisherPort eventPublisher;
 
+    /**
+     * SR-RF-99 (ALMACEN → SUSPENDIDA) y SR-RF-103 (USUARIO → PLAN GRATUITO).
+     *
+     * IMPORTANTE (v29/10/2026): el requerimiento ELIMINÓ el "periodo de gracia".
+     * La suspensión/degradación es INMEDIATA al vencer el periodo pagado.
+     * El aviso "antes y después" (RN-02) se delega a ms-notificaciones vía
+     * el evento RabbitMQ publicado al final del método.
+     *
+     * ADR 09 (Contexto.txt) confirma: "No hay periodo de gracia. Si no paga,
+     * pasa a VENCIDA o SUSPENDIDA inmediatamente."
+     */
     @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void revisarSuscripcionesVencidas() {

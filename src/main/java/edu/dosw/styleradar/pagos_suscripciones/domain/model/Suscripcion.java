@@ -79,12 +79,22 @@ public class Suscripcion {
         this.autoRenovacion = false;
     }
 
-    /** ADR 09 downgrade: programa el nuevo plan para la próxima renovación. */
+    /**
+     * SR-RF-101 (v29/10/2026) ELIMINÓ el "cambio de plan".
+     * El requerimiento ahora solo exige "cancelar plan de usuario".
+     *
+     * @deprecated Fuera de alcance vigente. Se mantiene para reactivación futura (Sprint 3).
+     *             Ver README §Desviaciones.
+     */
+    @Deprecated(since = "2026-11-11")
     public void programarCambioPlan(Long nuevoPlanId) {
         this.planProgramadoId = nuevoPlanId;
     }
 
-    /** Aplica el plan programado en el momento de activación/renovación. */
+    /**
+     * Aplica el plan programado en el momento de activación/renovación.
+     * Se mantiene por compatibilidad con {@link #programarCambioPlan(Long)}.
+     */
     public void aplicarCambioPlan() {
         if (planProgramadoId != null) {
             this.planId = this.planProgramadoId;

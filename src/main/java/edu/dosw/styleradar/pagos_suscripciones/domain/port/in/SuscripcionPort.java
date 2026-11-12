@@ -22,6 +22,11 @@ public interface SuscripcionPort {
     
     /**
      * @return init_point si es upgrade (cobro de diferencia); null si es downgrade.
+     * @deprecated FUERA DE ALCANCE VIGENTE desde SR-RF-101 (v29/10/2026).
+     *             El requerimiento ahora solo exige "cancelar plan de usuario".
+     *             Este método se mantiene para reactivarlo en Sprint 3.
+     *             Ver README §Desviaciones.
      */
+    @Deprecated(since = "2026-11-11")
     String programarCambioPlan(String idSuscriptor, Long nuevoPlanId, String emailPayer);
 }
