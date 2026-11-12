@@ -37,7 +37,7 @@
 
   <p align="center">
     <img src="https://img.shields.io/badge/BOUNDED_CONTEXT-PAGOS DE SUSCRIPCIONES-12063A?style=for-the-badge" alt="Context" />
-    <img src="https://img.shields.io/badge/PUERTO_OFICIAL-8090-5600EF?style=for-the-badge" alt="Port" />
+    <img src="https://img.shields.io/badge/PUERTO_OFICIAL-8400-5600EF?style=for-the-badge" alt="Port" />
     <img src="https://img.shields.io/badge/ARQUITECTURA-HEXAGONAL-16A34A?style=for-the-badge" alt="Hexagonal" />
   </p>
 
@@ -98,8 +98,8 @@
 
 * **Identificador de Servicio:** `ms-pagos-suscripciones`
 * **Paquete Arquitectónico:** `Paquete 4: Pagos y Estadisticas`
-* **Puerto de Escucha Oficial:** `8090`
-* **Base de Datos Asignada:** `PostgreSQL 16` (`<nombre_db>_db`), aislada bajo el patrón *Database-per-Service*.
+* **Puerto de Escucha Oficial:** `8400`
+* **Base de Datos Asignada:** `PostgreSQL 16` (`styleradar_pagos`), aislada bajo el patrón *Database-per-Service*.
 * **Bounded Context:** `Pagos de Suscripciones`
 
 ### Responsabilidades del Dominio
@@ -108,9 +108,9 @@ Este microservicio encapsula las responsabilidades relacionadas con la gestión 
 
 | Qué HACE este Microservicio (Alcance)                             | Qué NO HACE este Microservicio (Límites)                                          |
 | :----------------------------------------------------------------- | :---------------------------------------------------------------------------------- |
-| • Gestiona el proceso de pago de una suscripción, según los requerimientos definidos.                          | • NO autentica usuarios (delegado a `ms-auth` en `:8081`).                     |
+| • Gestiona el proceso de pago de una suscripción, según los requerimientos definidos.                          | • NO autentica usuarios (delegado a `ms-auth` en `:8100`).                     |
 | • Registra y consulta el estado de los pagos.                         | • No administra el catálogo de prendas ni el inventario de las tiendas.     |
-| • Representa los resultados de pago, incluyendo los estados alternativos que definan los requerimientos.                       | • NO envía correos ni WebSockets (delegado a `ms-notificaciones` en `:8092`). |
+| • Representa los resultados de pago, incluyendo los estados alternativos que definan los requerimientos.                       | • NO envía correos ni WebSockets (delegado a `ms-notificaciones` en `:8300`). |
 | • Garantiza persistencia ACID e idempotencia en su base de datos. | • NO accede directamente a bases de datos de otros microservicios.                 |
 
 ### Arquetipos de Moda y Personajes de StyleRadar
@@ -137,7 +137,6 @@ Desarrollado y mantenido por el **Squad `NQS: No Queremos Scrum`** para la asign
 | :---: | :---: | :---: |
 | **Líder y apoyo** | `Cristian Camilo Ortiz Sanchez` | [@CatrachoINXS](https://github.com/CatrachoINXS) |
 | **Backend Developer** | `Juan Manuel Garzón Viracacha` | [@JuanMaGV1](https://github.com/JuanMaGV1) |
-| **Backend Developer** | `Daniel Jose Villamizar Castellanos` | [@ChanguaLover4ever](https://github.com/ChanguaLover4ever) |
 | **Frontend Developer** | `Julian Felipe Morales Zambrano` | [@JulianMorales2003](https://github.com/JulianMorales2003) |
 
 </div>
@@ -197,23 +196,7 @@ flowchart TD
 ```
 
 <div align="center">
-  <table width="100%" style="margin: 18px 0; border: 2px dashed #C4B5FD; border-radius: 8px; background-color: #FBFBFE;">
-    <tr>
-      <td align="center" style="padding: 20px;">
-        <p>
-          <img src="https://img.shields.io/badge/ESPACIO_DE_DIAGRAMA-DRAW.IO_/_PLANTUML-12063A?style=for-the-badge" alt="Diagrama Opcional" /><br />
-          <strong><font color="#5600EF" size="3">DIAGRAMA DE ARQUITECTURA HEXAGONAL EXPORTADO (OPCIONAL)</font></strong>
-        </p>
-        <p>
-          <sub>Si tu squad cuenta con un diagrama gráfico exportado de Draw.io, Miro o PlantUML, pégalo en este contenedor como alternativa visual.</sub>
-        </p>
-        <p>
-<!-- <img src="docs/evidencias/diagrama-hexagonal.png" width="90%" alt="Diagrama Hexagonal" /><br /> -->
-          <code>[ Espacio opcional para diagrama exportado · docs/evidencias/diagrama-hexagonal.png ]</code>
-        </p>
-      </td>
-    </tr>
-  </table>
+  <img src="docs/evidencias/diagrama-hexagonal.png" width="90%" alt="Diagrama Hexagonal" />
 </div>
 
 ### Estructura Oficial de Paquetes en `src/main/java/`
@@ -257,37 +240,99 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 | :--- | :---: | :--- | :--- | :--- | :--- |
 | **Producción (PROD)** | Active | Despliegue productivo de StyleRadar | `https://styleradar-backend-prod.azurewebsites.net` | [Swagger UI PROD](https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html) | [`/actuator/health`](https://styleradar-backend-prod.azurewebsites.net/actuator/health) |
 | **Calidad / Pruebas (QA)** | Active | Pruebas integradas de Sprint y QA | `https://styleradar-backend-qa.azurewebsites.net` | [Swagger UI QA](https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html) | [`/actuator/health`](https://styleradar-backend-qa.azurewebsites.net/actuator/health) |
-| **Desarrollo Local (DEV)** | Local | Entorno de desarrollo local en máquina | `http://localhost:8090` | [Swagger UI Local](http://localhost:8090/swagger-ui.html) | [`/actuator/health`](http://localhost:8090/actuator/health) |
+| **Desarrollo Local (DEV)** | Local | Entorno de desarrollo local en máquina | `http://localhost:8400` | [Swagger UI Local](http://localhost:8400/swagger-ui.html) | [`/actuator/health`](http://localhost:8400/actuator/health) |
 
-* **Especificación OpenAPI (Contrato JSON Schema):** `http://localhost:8090/v3/api-docs` (o `/v3/api-docs` en los dominios de PROD y QA).
+* **Especificación OpenAPI (Contrato JSON Schema):** `http://localhost:8400/v3/api-docs` (o `/v3/api-docs` en los dominios de PROD y QA).
 
 
 <div align="center">
-  <table width="100%" style="margin: 18px 0; border: 2px dashed #5600EF; border-radius: 8px; background-color: #FBFBFE;">
-    <tr>
-      <td align="center" style="padding: 22px;">
-        <p>
-          <img src="https://img.shields.io/badge/ESPACIO_DE_CAPTURA-EVIDENCIA_01-5600EF?style=for-the-badge" alt="Evidencia 01" /><br />
-          <strong><font color="#5600EF" size="3">DOCUMENTACIÓN SWAGGER OPENAPI UI ACTIVA</font></strong>
-        </p>
-        <p>
-          <sub>Pega aquí la captura de pantalla de la interfaz interactiva corriendo en <code>http://localhost:808X/swagger-ui.html</code> mostrando los endpoints del controlador.</sub>
-        </p>
-        <p>
-<!-- Al generar tu captura, descomenta la siguiente línea y guarda la imagen en la ruta indicada: -->
-<!-- <img src="docs/evidencias/swagger-ui.png" width="90%" alt="Evidencia Swagger UI" /><br /> -->
-          <code>[ Pegar captura de Swagger UI aquí · docs/evidencias/swagger-ui.png ]</code>
-        </p>
-      </td>
-    </tr>
-  </table>
+  
+<img src="docs/evidencias/swagger-ui.png" width="90%" alt="Evidencia Swagger UI" />
 </div>
 
 ### Tabla de Endpoints Expuestos
 
-|  Método  | Endpoint                      | Descripción                               | Rol Requerido         |       Códigos HTTP       |
+|  Método  | Endpoint                            | Descripción                                      | Rol Requerido         |      Códigos HTTP      | 
 | :--------: | :---------------------------- | :----------------------------------------- | :-------------------- | :-----------------------: |
-|  `GET`  | `/api/v1/pagos/health` | Health Check y estado del microservicio    | Público              |          `200`          |
+|  `POST`  | `/api/v1/suscripciones/iniciar` | Crea una suscripción en estado PENDIENTE, genera una orden y retorna el link de pago. | Público (Vía Gateway) |          `201`, `400`, `500`          |
+|  `GET`  | `/api/v1/suscripciones/{suscriptorId}` | Consulta los detalles y estado actual de la suscripción de un usuario/almacén. | Público (Vía Gateway) |          `200`, `404`          |
+|  `POST`  | `/api/v1/suscripciones/{suscriptorId}/cancelar` | Cancela la auto-renovación en MP. Mantiene activo el tiempo ya pagado. | Público (Vía Gateway) |          `200`, `404`          |
+|  `PUT`  | `/api/v1/suscripciones/{suscriptorId}/cambiar-plan` | Cambia de plan. Si es Upgrade, retorna link de pago por la diferencia. Si es Downgrade, lo programa. | Público (Vía Gateway) |          `200`, `400`          |
+|  `GET`  | `/api/v1/pagos/historial` | Consulta el historial de pagos propios del usuario autenticado. | JWT / Header X-User-Id |          `200`, `401`          |
+|  `POST`  | `/api/v1/pagos/{ordenId}/reembolsar` | Solicita reembolso total o parcial de un pago aprobado. | Requiere rol ADMIN (JWT) |          `200`, `400`, `403`          |
+|  `POST`  | `/api/v1/pagos/{ordenId}/reintentar` | Reintenta un pago rechazado/pendiente generando una nueva orden. | JWT / Header X-User-Id |          `200`, `400`          |
+|  `GET`  | `/api/v1/admin/pagos` | Consulta global de todos los pagos de la plataforma, filtrable por estado. | Requiere rol ADMIN (JWT) |          `200`, `403`          |
+|  `POST`  | `/api/v1/webhooks/mercadopago` | Recibe notificaciones de MP, valida HMAC, actualiza BD y publica evento. | Público + HMAC (x-signature) |          `200`, `400`          |
+|  `GET`  | `/api/v1/health` | Verifica el estado del microservicio (Actuator / Custom). | Público |          `200`          |
+
+<details>
+<summary><b>Click para ver Ejemplo Interactivo de Request y Response JSON (Payloads)</b></summary>
+
+<br>
+
+#### Ejemplo Request (`POST /api/v1/suscripciones/iniciar`)
+
+```bash
+curl -X POST \
+  "http://localhost:8400/api/v1/suscripciones/iniciar" \
+  -H "accept: text/plain" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "suscriptorId": "USER-TEST-FINAL",
+    "planId": 2,
+    "tipoSuscriptor": "USUARIO"
+    "emailPayer": "test_user_117646358391238183361@testuser.com"
+}'
+```
+
+#### Ejemplo Response Exitoso (`200 OK`)
+
+```json
+https://www.mercadopago.com.co/subscriptions/checkout?preapproval_id=c388e668fbc87474b129d889e98732888activation=true
+```
+#### Response exitoso (`PUT /api/v1/suscripciones/{suscriptorId}/cambiar-plan`)
+ 
+```json
+{
+  "tipo": "UPGRADE",
+  "init_point": "https://www.mercadopago.com.co/...",
+  "mensaje": "Pague la diferencia para activar el nuevo plan inmediatamente."
+}
+```
+ 
+#### Response exitoso (`GET /api/v1/admin/pagos`)
+ 
+Array directo (actualmente **no paginado**):
+ 
+```json
+[
+  {
+    "id": 1,
+    "suscripcionId": 100,
+    "monto": { "valor": 14900.00, "moneda": "COP" },
+    "estado": "APROBADO",
+    "idPagoExterno": "MP-12345",
+    "montoReembolsado": { "valor": 0.00, "moneda": "COP" },
+    "motivoReembolso": null,
+    "fechaCreacion": "2026-11-11T10:00:00"
+  }
+]
+```
+ 
+#### Response de Error (`GlobalExceptionHandler`)
+ 
+Aplica para cualquier `400`, `403`, `404`, `409` y `500`:
+ 
+```json
+{
+  "timestamp": "2026-11-11T22:15:30.123",
+  "status": 400,
+  "error": "INVALID_STATE",
+  "message": "La suscripción ya está activa. No se requiere reintentar el pago.",
+  "path": "/api/v1/pagos/1/reintentar"
+}
+```
+</details>
 
 ---
 
@@ -295,11 +340,48 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 
 ## <img src="https://img.shields.io/badge/05-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 5. EVENTOS QUE PUBLICA Y CONSUME
 
-La comunicación asíncrona entre microservicios se orquesta a través de **RabbitMQ 3.12** utilizando Topic Exchanges durables.
+La comunicación asíncrona entre microservicios se orquesta a través de **RabbitMQ 3.12**. Este microservicio actúa como **productor** del evento de confirmación de pago.
+ 
+* **Exchange de Pagos:** `styleradar.payments.exchange`
+* **Rol actual:** Productor. No consume eventos de otros microservicios.
+### Matriz de Eventos AMQP
+ 
+|       Tipo       | Routing Key / Evento | Exchange                       | Microservicio Emisor / Receptor | Cuándo se Dispara / Acción |
+| :---------------: | :------------------- | :----------------------------- | :------------------------------ | :-------------------------- |
+| **PUBLICA** | `pago.confirmado`    | `styleradar.payments.exchange` | `ms-pagos-suscripciones`        | Se publica tras recibir el webhook de Mercado Pago, validar la firma HMAC, garantizar idempotencia (Redis SETNX) y actualizar la BD. |
+| **CONSUME** | N/A                  | N/A                            | N/A                             | Actualmente no consume eventos ni consulta a otros microservicios para funcionar. |
+ 
+### Consumidores del Evento `pago.confirmado`
+ 
+| Microservicio Consumidor | Acción esperada |
+| :--- | :--- |
+| `ms-usuarios` | Aplica los beneficios del plan (por ejemplo, límites de wishlist). |
+| `ms-tiendas` (o `ms-identidad`) | Aplica los beneficios del plan (por ejemplo, límites de catálogo). |
+ 
+<details>
+<summary><b>Click para ver Esquema JSON del Evento Publicado (con Idempotencia)</b></summary>
+<br>
+> Esquema ilustrativo del sobre del evento. Los campos de `data` deben validarse contra la clase real del evento en el código.
+ 
+```json
+{
+  "eventId": "018e3a2b-3333-7000-8000-000000000003",
+  "eventType": "pago.confirmado",
+  "timestamp": "2026-11-11T14:30:00Z",
+  "producer": "ms-pagos-suscripciones",
+  "correlationId": "corr-uuid-9999",
+  "data": {
+    "ordenId": 1,
+    "suscriptorId": "USER-123",
+    "tipoSuscriptor": "USUARIO",
+    "planId": 2,
+    "estado": "APROBADO"
+  }
+}
+```
+ 
+</details>
 
-* Estado: Pendiente de definir el mecanismo de comunicación entre microservicios.
-
-Se debe determinar si el servicio publicará eventos relacionados con el resultado de un pago y si consumirá eventos relacionados con suscripciones.
 
 ---
 
@@ -312,14 +394,14 @@ El stack del microservicio cumple con el estándar unificado de arquitectura de 
 | Capa / Componente                | Tecnología       | Versión   | Justificación Técnica                                                                        |
 | :------------------------------- | :---------------- | :--------- | :--------------------------------------------------------------------------------------------- |
 | **Lenguaje Core**          | Java LTS          | `21`     | Virtual Threads (Project Loom) para concurrencia masiva I/O sin saturar hilos del OS.          |
-| **Framework Empresarial**  | Spring Boot       | `3.2.9`  | Gestión declarativa de configuración, ecosistema nativo Spring Data y Spring AMQP.           |
-| **Base de Datos**          | PostgreSQL        | `16`     | Integridad transaccional ACID, llaves UUIDv7 y soporte de extensiones espaciales/GIN.          |
-| **Migraciones de BD**      | Flyway            | `10.x`   | Control de versiones reproducible de scripts SQL (`V1__init.sql`) en arranque de contenedor. |
-| **Broker de Mensajería**  | RabbitMQ          | `3.12+`  | Desacoplamiento temporal de microservicios mediante Topic Exchanges durables.                  |
-| **Caché en Memoria**      | Redis             | `7.x`    | Caché L2 para consultas de alto tráfico y candados distribuidos (Redlock).                   |
-| **Mapeo de DTOs**          | MapStruct         | `1.5.x`  | Generación de mappers en tiempo de compilación con cero sobrecarga de reflection.            |
+| **Framework Empresarial**  | Spring Boot       | `3.2.5`  | Gestión declarativa de configuración, ecosistema nativo Spring Data y Spring AMQP.           |
+| **Base de Datos**          | PostgreSQL        | `16`     | Integridad transaccional ACID. Tablas: `planes`, `suscripciones`, `ordenes_pago`, `webhooks_log`. |
+| **Migraciones de BD**      | Flyway            | `10.10.0`   | Control de versiones reproducible de scripts SQL en arranque; valida el esquema real.           |
+| **Broker de Mensajería**  | RabbitMQ          | `3.12+`  | Publicación del evento `pago.confirmado` en `styleradar.payments.exchange`.                    |
+| **Caché en Memoria**      | Redis             | `7.x`    | Bloqueo `SETNX` para idempotencia en el procesamiento de webhooks de Mercado Pago.           |
+| **Cliente HTTP Declarativo** | Spring Cloud OpenFeign | `2023.0.1` | Consumo de las APIs de Mercado Pago (Preapproval para suscripciones y Payments para reembolsos). |
 | **Testing Core**           | JUnit 5 + Mockito | `5.10.x` | Pruebas unitarias sobre el núcleo de dominio sin inicializar el contenedor Spring.            |
-| **Testing Integración**   | Testcontainers    | `1.19.x` | Instanciación automática de PostgreSQL y RabbitMQ en Docker durante `mvn verify`.          |
+| **Testing Integración**   | Testcontainers    | `1.19.7` | Instanciación automática de PostgreSQL y RabbitMQ en Docker durante `mvn verify`.          |
 | **Métricas de Cobertura** | JaCoCo Plugin     | `0.8.11` | Verificación estricta de cobertura mínima (≥ 85%) como regla de fallo en el build.     |
 
 ---
@@ -339,7 +421,9 @@ El stack del microservicio cumple con el estándar unificado de arquitectura de 
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/StyleRadar/NQS-Payment-Service.git
-cd NQS-Payment-Service# 2. Levantar servicios de infraestructura en Docker (PostgreSQL, Redis, RabbitMQ)
+cd NQS-Payment-Service
+
+# 2. Levantar servicios de infraestructura en Docker (PostgreSQL, Redis, RabbitMQ)
 docker compose up -d postgres rabbitmq redis
 
 # 3. Ejecutar el microservicio localmente
@@ -349,29 +433,14 @@ mvn clean spring-boot:run -Dspring-boot.run.profiles=dev
 ### Comprobación de Salud (Health Check)
 
 ```bash
-curl -s http://localhost:8090/actuator/health | jq .
+curl -s http://localhost:8400/actuator/health | jq .
 # Esperado: {"status":"UP","components":{"db":{"status":"UP"},"rabbit":{"status":"UP"}}}
 ```
 
 <div align="center">
-  <table width="100%" style="margin: 18px 0; border: 2px dashed #5600EF; border-radius: 8px; background-color: #FBFBFE;">
-    <tr>
-      <td align="center" style="padding: 22px;">
-        <p>
-          <img src="https://img.shields.io/badge/ESPACIO_DE_CAPTURA-EVIDENCIA_02-5600EF?style=for-the-badge" alt="Evidencia 02" /><br />
-          <strong><font color="#5600EF" size="3">CONTENEDOR OCI DOCKER EN EJECUCIÓN (docker compose ps)</font></strong>
-        </p>
-        <p>
-          <sub>Pega aquí la captura de terminal ejecutando <code>docker compose ps</code> mostrando el contenedor del microservicio y sus servicios de persistencia y broker en estado healthy.</sub>
-        </p>
-        <p>
-<!-- Al generar tu captura, descomenta la siguiente línea y guarda la imagen en la ruta indicada: -->
-<!-- <img src="docs/evidencias/docker-compose-ps.png" width="90%" alt="Docker Compose PS" /><br /> -->
-          <code>[ Pegar captura de Docker compose ps aquí · docs/evidencias/docker-compose-ps.png ]</code>
-        </p>
-      </td>
-    </tr>
-  </table>
+
+<img src="docs/evidencias/docker-compose-ps.png" width="90%" alt="Docker Compose PS" />
+          
 </div>
 
 
@@ -385,18 +454,22 @@ Todas las configuraciones sensibles y dependientes de entorno se externalizan me
 
 | Variable                   | Descripción                                 | Valor por Defecto (`dev`) | Requerido en Prod |
 | :------------------------- | :------------------------------------------- | :-------------------------- | :---------------: |
-| `SERVER_PORT`            | Puerto de escucha HTTP del microservicio     | `8090`                    |        Sí        |
+| `SERVER_PORT`            | Puerto de escucha HTTP del microservicio     | `8400`                    |        Sí        |
 | `SPRING_PROFILES_ACTIVE` | Perfil de configuración Spring Boot activo  | `dev`                     |        Sí        |
 | `DB_HOST`                | Hostname o IP del servidor PostgreSQL        | `localhost`               |        Sí        |
 | `DB_PORT`                | Puerto de conexión a PostgreSQL             | `5432`                    |        Sí        |
-| `DB_NAME`                | Nombre de la base de datos aislada           | `<nombre_db>_db`          |        Sí        |
+| `DB_NAME`                | Nombre de la base de datos aislada           | `suscripciones_pagos`          |        Sí        |
 | `DB_USER`                | Usuario de conexión a la base de datos      | `styleradar_user`         |        Sí        |
 | `DB_PASSWORD`            | Contraseña del usuario de base de datos     | `secret_dev_pass`         |        Sí        |
 | `RABBITMQ_HOST`          | Hostname del broker de mensajería           | `localhost`               |        Sí        |
 | `RABBITMQ_PORT`          | Puerto AMQP de RabbitMQ                      | `5672`                    |        Sí        |
 | `RABBITMQ_USERNAME`      | Usuario de conexión a RabbitMQ              | `guest`                   |        Sí        |
 | `RABBITMQ_PASSWORD`      | Contraseña de conexión a RabbitMQ          | `guest`                   |        Sí        |
-| `REDIS_HOST`             | Hostname del servidor de caché Redis        | `localhost`               |        No        |
+| `REDIS_HOST`             | Hostname del servidor Redis (idempotencia de webhooks) | `localhost`        |        Sí        |
+| `REDIS_PORT`             | Puerto de conexión a Redis                   | `6379`                    |        Sí        |
+| `MP_ACCESS_TOKEN`        | Access Token de Mercado Pago (sandbox en dev) | `<MP_SANDBOX_TOKEN>`      |        Sí        |
+| `MP_PUBLIC_KEY`          | Inicializar la integracion de pagos y proteger la informacion enviada | `<MP_PUBLIC_KEY>`      |        Sí        |
+| `MP_WEBHOOK_SECRET`      | Secreto para validar la firma HMAC (`x-signature`) del webhook | `<MP_WEBHOOK_SECRET>` |        Sí        |
 | `JWT_PUBLIC_KEY`         | Clave pública RSA/RS256 para validar tokens | `<PATH_OR_PEM_VALUE>`     |        Sí        |
 
 <details>
@@ -408,13 +481,13 @@ Todas las configuraciones sensibles y dependientes de entorno se externalizan me
 # ==============================================================================
 # STYLERADAR · VARIABLES DE ENTORNO LOCALES (.env)
 # ==============================================================================
-SERVER_PORT=8090
+SERVER_PORT=8400
 SPRING_PROFILES_ACTIVE=dev
 
 # Persistencia PostgreSQL
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=<nombre_db>_db
+DB_NAME=styleradar_pagos
 DB_USER=styleradar_user
 DB_PASSWORD=styleradar_secret
 
@@ -424,10 +497,14 @@ RABBITMQ_PORT=5672
 RABBITMQ_USERNAME=guest
 RABBITMQ_PASSWORD=guest
 
-# Caché Redis
+# Caché Redis (idempotencia de webhooks)
 REDIS_HOST=localhost
 REDIS_PORT=6379
-
+ 
+# Mercado Pago
+MP_ACCESS_TOKEN=<MP_SANDBOX_TOKEN>
+MP_WEBHOOK_SECRET=<MP_WEBHOOK_SECRET>
+ 
 # Seguridad JWT
 JWT_PUBLIC_KEY=classpath:keys/public-key.pem
 ```
@@ -455,24 +532,7 @@ mvn jacoco:report
 * **Ruta del Reporte HTML:** `target/site/jacoco/index.html`
 
 <div align="center">
-  <table width="100%" style="margin: 18px 0; border: 2px dashed #5600EF; border-radius: 8px; background-color: #FBFBFE;">
-    <tr>
-      <td align="center" style="padding: 22px;">
-        <p>
-          <img src="https://img.shields.io/badge/ESPACIO_DE_CAPTURA-EVIDENCIA_03-5600EF?style=for-the-badge" alt="Evidencia 03" /><br />
-          <strong><font color="#5600EF" size="3">REPORTE CONSOLIDADO DE COBERTURA JACOCO (≥ 85%)</font></strong>
-        </p>
-        <p>
-          <sub>Pega aquí la captura del reporte HTML (<code>target/site/jacoco/index.html</code>) evidenciando el cumplimiento de la cobertura mínima obligatoria (≥ 85%).</sub>
-        </p>
-        <p>
-<!-- Al generar tu captura, descomenta la siguiente línea y guarda la imagen en la ruta indicada: -->
-<!-- <img src="docs/evidencias/cobertura-jacoco.png" width="90%" alt="Reporte JaCoCo" /><br /> -->
-          <code>[ Pegar captura de JaCoCo ≥ 85% aquí · docs/evidencias/cobertura-jacoco.png ]</code>
-        </p>
-      </td>
-    </tr>
-  </table>
+  <img src="docs/evidencias/cobertura-jacoco.png" width="90%" alt="Reporte JaCoCo" />
 </div>
 
 
@@ -480,9 +540,9 @@ mvn jacoco:report
 
 | Nivel de Prueba                   | Alcance                                    | Tecnologías Utilizadas          | Ubicación en el Código                                    | Cobertura Meta |
 | :-------------------------------- | :----------------------------------------- | :------------------------------- | :---------------------------------------------------------- | :------------: |
-| **Pruebas Unitarias**       | Lógica de Dominio y Casos de Uso aislados | JUnit 5, Mockito, AssertJ        | `src/test/java/.../domain/`, `src/test/java/.../application/` | ≥ 90% |
-| **Pruebas de Integración** | Repositorios JPA y Adaptadores REST        | Spring Boot Test, Testcontainers | `src/test/java/.../infrastructure/`                       |  ≥ 85%  |
-| **Pruebas de Contrato**     | Verificación de contratos OpenAPI         | MockMvc, JSON Assert             | `src/test/java/.../rest/`                                 |  ≥ 85%  |
+| **Pruebas Unitarias**       | Lógica de Dominio y Casos de Uso aislados | JUnit 5, Mockito, AssertJ        | `src/test/java/edu/dosw/styleradar/pagos_suscripciones/application/`, | ≥ 85% |
+| **Pruebas de Integración** | Repositorios JPA y Adaptadores REST        | Spring Boot Test, Testcontainers | `src/test/java/edu/dosw/styleradar/pagos_suscripciones/infrastructure/`                       |  ≥ 85%  |
+| **Pruebas de Contrato**     | Verificación de contratos OpenAPI         | MockMvc, JSON Assert             | `src/test/java/edu/dosw/styleradar/pagos_suscripciones/infrastructure/adapter/in/rest/`                                 |  ≥ 85%  |
 
 > [!IMPORTANT]
 > **Criterio de Fallo en CI:** El archivo `pom.xml` contiene la regla `<limit><minimum>0.85</minimum></limit>`. Si la cobertura total consolidada es inferior al 85%, el comando `mvn verify` fallará con error y el pipeline bloqueará el Pull Request.
@@ -529,24 +589,7 @@ flowchart LR
 * **Deuda Técnica:** < 5%
 
 <div align="center">
-  <table width="100%" style="margin: 18px 0; border: 2px dashed #5600EF; border-radius: 8px; background-color: #FBFBFE;">
-    <tr>
-      <td align="center" style="padding: 22px;">
-        <p>
-          <img src="https://img.shields.io/badge/ESPACIO_DE_CAPTURA-EVIDENCIA_04-5600EF?style=for-the-badge" alt="Evidencia 04" /><br />
-          <strong><font color="#5600EF" size="3">EJECUCIÓN DEL PIPELINE CI/CD EN VERDE (BUILD & QUALITY GATE PASSED)</font></strong>
-        </p>
-        <p>
-          <sub>Pega aquí la captura del pipeline de integración continua (Azure DevOps / GitHub Actions) finalizado con éxito en todas sus fases.</sub>
-        </p>
-        <p>
-<!-- Al generar tu captura, descomenta la siguiente línea y guarda la imagen en la ruta indicada: -->
-<!-- <img src="docs/evidencias/pipeline-ci-cd.png" width="90%" alt="Pipeline CI/CD" /><br /> -->
-          <code>[ Pegar captura del Pipeline CI/CD en verde aquí · docs/evidencias/pipeline-ci-cd.png ]</code>
-        </p>
-      </td>
-    </tr>
-  </table>
+  <img src="docs/evidencias/pipeline-ci-cd.png" width="90%" alt="Pipeline CI/CD" />
 </div>
 
 ---
@@ -576,7 +619,7 @@ Todo mensaje de commit debe seguir el estándar:
 
 Ejemplos válidos:
 feat(catalogo): agregar filtro de prendas por ocasión y estilo [#SR-RF-13]
-fix(inventario): corregir condición de carrera en reserva de talla [#SR-RF-48]
+fix(suscripcion): corregir inicio de suscripciones [#SR-RF-67]
 test(dominio): agregar pruebas unitarias para entidad Prenda [#SR-RF-50]
 docs(readme): actualizar variables de entorno y topología de eventos
 ```
@@ -604,24 +647,7 @@ El seguimiento de requerimientos, evidencias y artefactos de entrega se centrali
 * **Tablero Scrum del Squad (Jira):** [https://mail-team-hdkr3g6f.atlassian.net/jira/software/projects/NQS/boards/1?filter=&groupBy=none](https://mail-team-hdkr3g6f.atlassian.net/jira/software/projects/NQS/boards/1?filter=&groupBy=none)
 
 <div align="center">
-  <table width="100%" style="margin: 18px 0; border: 2px dashed #5600EF; border-radius: 8px; background-color: #FBFBFE;">
-    <tr>
-      <td align="center" style="padding: 22px;">
-        <p>
-          <img src="https://img.shields.io/badge/ESPACIO_DE_CAPTURA-EVIDENCIA_05-5600EF?style=for-the-badge" alt="Evidencia 05" /><br />
-          <strong><font color="#5600EF" size="3">TABLERO SCRUM Y SEGUIMIENTO DE LA ÉPICA EN JIRA</font></strong>
-        </p>
-        <p>
-          <sub>Pega aquí la captura del tablero de Jira mostrando la Épica, User Stories y tareas asignadas al microservicio para el sprint.</sub>
-        </p>
-        <p>
-<!-- Al generar tu captura, descomenta la siguiente línea y guarda la imagen en la ruta indicada: -->
- <img src="docs/evidencias/jira-tablero-epica.png" width="90%" alt="Tablero Jira" /><br />
-          <code></code>
-        </p>
-      </td>
-    </tr>
-  </table>
+  <img src="docs/evidencias/jira-tablero-epica.png" width="90%" alt="Tablero Jira" />
 </div>
 
 ### Requerimientos Funcionales Asignados
