@@ -44,4 +44,10 @@ public class MockMercadoPagoAdapter implements MercadoPagoPort {
         log.info("🧪 MOCK: consultando pago completo {} → approved con external_reference 1", idPagoExterno);
         return Map.of("status", "approved", "external_reference", "1");
     }
+
+    @Override
+    public Map<String, Object> consultarPagoAutorizado(String idPagoExterno) {
+        log.info("🧪 MOCK: consultando pago completo {} → approved con external_reference 1", idPagoExterno);
+        return Map.of("status", "approved", "external_reference", "1");
+    }
 }

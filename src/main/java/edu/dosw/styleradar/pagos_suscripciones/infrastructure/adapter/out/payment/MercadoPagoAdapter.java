@@ -3,6 +3,7 @@ package edu.dosw.styleradar.pagos_suscripciones.infrastructure.adapter.out.payme
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.OrdenPago;
 import edu.dosw.styleradar.pagos_suscripciones.domain.model.Suscripcion;
 import edu.dosw.styleradar.pagos_suscripciones.domain.port.out.MercadoPagoPort;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,10 +41,7 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
         req.put("payer_email", emailPayer);
         req.put("status", "pending");
         req.put("notification_url", webhookUrl);
-        
-        // CAMBIO AQUÍ: Redirigir a Swagger en lugar de styleradar.com que no existe
         req.put("back_url", "https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io/swagger-ui/index.html");
-        
         req.put("auto_recurring", Map.of(
                 "frequency", 1,
                 "frequency_type", "months",
@@ -53,8 +51,7 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
         Map<String, Object> resp = feignClient.crearPreapproval(auth(), req);
 
         if (resp == null) {
-            log.warn("MP devolvió null para preapproval de la orden {}", orden.getId());
-            return Map.of(KEY_INIT_POINT, "", KEY_PREAPPROVAL_ID, "");
+            throw new RuntimeException("Mercado Pago devolvió null para la orden " + orden.getId());
         }
 
         String initPoint = (String) resp.get(KEY_INIT_POINT);
@@ -72,7 +69,6 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
 
     @Override
     public void reembolsarPago(String idPagoExterno, String monto) {
-        log.info("Reembolso real a MP para pago {}: {}", idPagoExterno, monto);
         Map<String, Object> req = Map.of("amount", Double.parseDouble(monto));
         feignClient.reembolsarPago(auth(), idPagoExterno, req);
     }
@@ -86,10 +82,26 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
     @Override
     public Map<String, Object> consultarPago(String idPagoExterno) {
         try {
+            log.info("Consultando pago {} a la API de MP...", idPagoExterno);
             return feignClient.consultarPago(auth(), idPagoExterno);
+        } catch (FeignException.NotFound e) {
+            // 404: El pago no existe para este token (ej. token de producción vs pago de prueba)
+            log.error("Pago {} no encontrado en Mercado Pago. Verifica el token y el entorno (Sandbox vs Prod).", idPagoExterno);
+            throw new RuntimeException("Pago no encontrado en Mercado Pago: " + idPagoExterno, e);
         } catch (Exception e) {
-            log.error("Error consultando pago {} en MP (posiblemente ID falso de prueba): {}", idPagoExterno, e.getMessage());
-            return null;
+            log.error("Error de conexión al consultar pago {} en MP: {}", idPagoExterno, e.getMessage());
+            throw new RuntimeException("Error de conexión con Mercado Pago", e);
+        }
+    }
+
+    @Override
+    public Map<String, Object> consultarPagoAutorizado(String idPagoAutorizado) {
+        try {
+            log.info("Consultando pago autorizado {} a la API de MP...", idPagoAutorizado);
+            return feignClient.consultarPagoAutorizado(auth(), idPagoAutorizado);
+        } catch (Exception e) {
+            log.error("Error consultando pago autorizado {} en MP: {}", idPagoAutorizado, e.getMessage());
+            throw new RuntimeException("Error al consultar pago autorizado", e);
         }
     }
 }

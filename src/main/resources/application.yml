@@ -36,5 +36,6 @@ mercadopago:
   access-token: ${MP_ACCESS_TOKEN:TEST-xxxx-xxxx}
   public-key: ${MP_PUBLIC_KEY:TEST-xxxx-xxxx}
   webhook-secret: ${MP_WEBHOOK_SECRET:secret-key-12345}
+  webhook-url: ${MP_WEBHOOK_URL:http://localhost:8400/api/v1/webhooks/mercadopago}
   api:
     url: https://api.mercadopago.com

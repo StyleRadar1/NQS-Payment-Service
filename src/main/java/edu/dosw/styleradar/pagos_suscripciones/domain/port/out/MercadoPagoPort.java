@@ -16,4 +16,5 @@ public interface MercadoPagoPort {
     String consultarEstadoPago(String idPagoExterno);
 
     Map<String, Object> consultarPago(String idPagoExterno);
+    Map<String, Object> consultarPagoAutorizado(String idPagoAutorizado);
 }

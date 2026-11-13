@@ -36,4 +36,11 @@ public interface MercadoPagoFeignClient {
             @PathVariable("id") String id,
             @RequestBody Map<String, Object> request
     );
+
+    // --- NUEVO ENDPOINT ---
+    @GetMapping("/authorized_payments/{id}")
+    Map<String, Object> consultarPagoAutorizado(
+            @RequestHeader("Authorization") String authorization,
+            @PathVariable("id") String id
+    );
 }

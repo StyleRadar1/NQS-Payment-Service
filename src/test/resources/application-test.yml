@@ -10,3 +10,9 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password: 
+  mercadopago:
+  webhook-secret: secret-key-12345
+  access-token: TEST-xxxx-xxxx
+  public-key: TEST-xxxx-xxxx
+  api:
+    url: https://api.mercadopago.com

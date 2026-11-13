@@ -43,7 +43,9 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
         if (!idempotencyPort.adquirirLock(lockKey)) {
             throw new IdempotencyException("El pago ya está siendo procesado por otra instancia.");
         }
+
         try {
+            // Registro de auditoría (solo si no existe)
             if (!webhookLogRepository.existsByIdPagoExterno(idExterno)) {
                 WebhookLogEntity entry = new WebhookLogEntity();
                 entry.setIdPagoExterno(idExterno);
@@ -60,30 +62,59 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
 
             if (tipoEvento.equalsIgnoreCase("payment")) {
                 procesarEventoPago(idExterno);
+            } else if (tipoEvento.equalsIgnoreCase("subscription_authorized_payment")) {
+                procesarEventoPagoAutorizado(idExterno);
             } else if (tipoEvento.toLowerCase().contains("preapproval")) {
                 log.info("Evento preapproval recibido para {} (informativo).", idExterno);
             } else {
                 log.warn("Tipo de evento no soportado: {}", tipoEvento);
             }
-        } catch (Exception e) {
-            log.error("Error procesando el webhook en el caso de uso: {}", e.getMessage(), e);
         } finally {
             idempotencyPort.liberarLock(lockKey);
         }
     }
 
     private void procesarEventoPago(String idPagoExterno) {
+        // Consulta obligatoria a MP. Si falla, se lanza excepción y el Controller devuelve 200
+        // para evitar reintentos, pero la orden NO se aprueba.
         Map<String, Object> pagoData = mercadoPagoPort.consultarPago(idPagoExterno);
-        if (pagoData == null || pagoData.get("status") == null) {
-            log.warn("No se pudo obtener información del pago {} en MP (posible ID inválido en simulación)", idPagoExterno);
-            return;
+        if (pagoData == null) {
+            throw new RuntimeException("No se pudo obtener información del pago " + idPagoExterno + " desde Mercado Pago");
         }
 
-        String estadoReal = pagoData.get("status").toString();
+        String estadoReal = pagoData.get("status") != null ? pagoData.get("status").toString() : null;
         String externalRef = pagoData.get("external_reference") != null ? pagoData.get("external_reference").toString() : null;
 
+        procesarEstado(estadoReal, externalRef, idPagoExterno);
+    }
+
+    private void procesarEventoPagoAutorizado(String idPagoAutorizado) {
+        Map<String, Object> pagoData = mercadoPagoPort.consultarPagoAutorizado(idPagoAutorizado);
+        if (pagoData == null) {
+            throw new RuntimeException("No se pudo obtener información del pago autorizado " + idPagoAutorizado);
+        }
+
+        String estadoReal = null;
+        if (pagoData.get("payment") instanceof Map<?, ?> paymentObj) {
+            Object status = paymentObj.get("status");
+            if (status != null) estadoReal = status.toString();
+        }
+        if (estadoReal == null && pagoData.get("status") != null) {
+            estadoReal = pagoData.get("status").toString();
+        }
+                
+        String externalRef = pagoData.get("external_reference") != null ? pagoData.get("external_reference").toString() : null;
+
+        procesarEstado(estadoReal, externalRef, idPagoAutorizado);
+    }
+
+    private void procesarEstado(String estadoReal, String externalRef, String idExternoMp) {
+        if (estadoReal == null) {
+            log.warn("No se encontró estado para el evento {}", idExternoMp);
+            return;
+        }
         if (externalRef == null || externalRef.isEmpty()) {
-            log.warn("El pago {} no tiene external_reference", idPagoExterno);
+            log.warn("El evento {} no tiene external_reference", idExternoMp);
             return;
         }
 
@@ -97,35 +128,28 @@ public class ProcesarWebhookUseCaseImpl implements WebhookPort {
 
         EstadoPago estado = parseEstado(estadoReal);
         if (estado == null) {
-            log.warn("Estado desconocido '{}' para pago {}. Ignorado.", estadoReal, idPagoExterno);
+            log.warn("Estado desconocido '{}' para evento {}. Ignorado.", estadoReal, idExternoMp);
             return;
         }
 
-        OrdenPago orden = ordenPagoRepository.buscarPorId(ordenId).orElse(null);
-        if (orden == null) {
-            log.warn("No se encontró orden local para el external_reference: {}", ordenId);
-            return;
-        }
+        OrdenPago orden = ordenPagoRepository.buscarPorId(ordenId)
+                .orElseThrow(() -> new RuntimeException("No se encontró orden local para el external_reference: " + ordenId));
 
-        boolean actualizado = false;
-        if (orden.getIdPagoExterno() == null) {
-            orden.actualizarIdPagoExterno(idPagoExterno);
-            actualizado = true;
-        }
-
+        // Idempotencia a nivel de estado
         if (orden.getEstado() == estado) {
             log.info("Orden {} ya en estado {}. Skip idempotente.", orden.getId(), estado);
-            if (actualizado) ordenPagoRepository.guardar(orden);
             return;
         }
 
         orden.actualizarEstado(estado.name());
+        orden.actualizarIdPagoExterno(idExternoMp);
         ordenPagoRepository.guardar(orden);
 
         if (estado == EstadoPago.APROBADO) {
+            log.info("Orden {} aprobada. Activando suscripción...", orden.getId());
             suscripcionActivacionService.activarYExtenderSuscripcion(orden);
         } else {
-            log.warn("Pago {} en estado {}. No se activan beneficios.", idPagoExterno, estado);
+            log.warn("Pago {} en estado {}. No se activan beneficios.", idExternoMp, estado);
         }
     }
 

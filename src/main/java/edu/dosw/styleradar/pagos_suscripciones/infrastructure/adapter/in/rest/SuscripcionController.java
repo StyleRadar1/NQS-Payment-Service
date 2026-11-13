@@ -20,38 +20,49 @@ public class SuscripcionController {
 
     private final SuscripcionPort suscripcionPort;
 
-    @Operation(summary = "Iniciar suscripción")
+    @Operation(summary = "Iniciar suscripción",
+               description = "El suscriptorId se toma del header X-User-Id (inyectado por el Gateway tras validar JWT).")
     @PostMapping("/iniciar")
-    public ResponseEntity<String> iniciar(@RequestBody CrearSuscripcionRequest req) {
+    public ResponseEntity<String> iniciar(
+            @RequestHeader("X-User-Id") String suscriptorId,
+            @RequestBody CrearSuscripcionRequest req) {
         return ResponseEntity.ok(suscripcionPort.iniciarSuscripcion(
-            req.suscriptorId(), req.planId(),
-            TipoSuscriptor.valueOf(req.tipoSuscriptor().toUpperCase()),
-            req.emailPayer()));
+                suscriptorId, req.planId(),
+                TipoSuscriptor.valueOf(req.tipoSuscriptor().toUpperCase()),
+                req.emailPayer()));
     }
 
     @GetMapping("/{suscriptorId}")
-    public ResponseEntity<Suscripcion> consultar(@PathVariable String suscriptorId) {
+    public ResponseEntity<Suscripcion> consultar(
+            @PathVariable String suscriptorId,
+            @RequestHeader("X-User-Id") String headerId) {
+        if (!suscriptorId.equals(headerId)) return ResponseEntity.status(403).build();
         return ResponseEntity.ok(suscripcionPort.consultarSuscripcion(suscriptorId));
     }
 
     @PostMapping("/{suscriptorId}/cancelar")
-    public ResponseEntity<Void> cancelar(@PathVariable String suscriptorId) {
+    public ResponseEntity<Void> cancelar(
+            @PathVariable String suscriptorId,
+            @RequestHeader("X-User-Id") String headerId) {
+        if (!suscriptorId.equals(headerId)) return ResponseEntity.status(403).build();
         suscripcionPort.cancelarRenovacion(suscriptorId);
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Cambiar de plan (upgrade/downgrade)",
-               description = "Upgrade devuelve init_point. Downgrade se aplica en renovación.")
+    @Deprecated(since = "2026-11-11")
+    @Operation(summary = "[DEPRECADO · SR-RF-101] Cambiar de plan (fuera de alcance vigente)",
+               deprecated = true)
     @PutMapping("/{suscriptorId}/cambiar-plan")
     public ResponseEntity<Map<String, String>> cambiarPlan(
             @PathVariable String suscriptorId,
+            @RequestHeader("X-User-Id") String headerId,
             @RequestParam Long nuevoPlanId,
             @RequestParam String emailPayer) {
+        if (!suscriptorId.equals(headerId)) return ResponseEntity.status(403).build();
         String initPoint = suscripcionPort.programarCambioPlan(suscriptorId, nuevoPlanId, emailPayer);
         if (initPoint != null) {
             return ResponseEntity.ok(Map.of(
-                "tipo", "UPGRADE",
-                "init_point", initPoint,
+                "tipo", "UPGRADE", "init_point", initPoint,
                 "mensaje", "Pague la diferencia para activar el nuevo plan inmediatamente."));
         }
         return ResponseEntity.ok(Map.of(
@@ -59,8 +70,8 @@ public class SuscripcionController {
             "mensaje", "El cambio se aplicará en la próxima renovación."));
     }
 
+    /** FIX: suscriptorId removido — viene por header X-User-Id. */
     public record CrearSuscripcionRequest(
-            @Schema(example = "USER-123") String suscriptorId,
             @Schema(example = "2") Long planId,
             @Schema(example = "USUARIO") String tipoSuscriptor,
             @Schema(example = "test@test.com") String emailPayer) {}
