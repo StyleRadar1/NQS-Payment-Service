@@ -1,102 +1,98 @@
-name: CI/CD - ms-pagos-suscripciones
+name: CI/CD App Service · ms-pagos-suscripciones
 
 on:
   push:
-    branches: [ "develop", "main", "master" ]
+    branches: [develop, main]
   pull_request:
-    branches: [ "develop", "main", "master" ]
+    branches: [develop, main]
+
+permissions:
+  contents: read
+  id-token: write
 
 env:
-  DOCKER_IMAGE: juangv1/styleradar-ms-pagos
-  RESOURCE_GROUP: rg-styleradar-pagos
-  CONTAINER_APP_QA: ms-pagos-qa
-  CONTAINER_APP_PROD: ms-pagos-prod
+  JAVA_VERSION: "21"
+  JAR_NAME: pagos-suscripciones-0.0.1-SNAPSHOT.jar
 
 jobs:
-  # 1. Build y Pruebas
   build-and-test:
+    name: Build · Tests · JAR
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout del código
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Configurar JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: maven
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
 
-    - name: Compilar y ejecutar pruebas
-      run: mvn -B clean verify
+      # El JKS es público (solo CA), pero se mantiene fuera del repo.
+      # Se empaqueta en el JAR para que App Service lo encuentre en classpath.
+      - name: Preparar truststore RabbitMQ
+        env:
+          RABBITMQ_TRUSTSTORE_BASE64: ${{ secrets.RABBITMQ_TRUSTSTORE_BASE64 }}
+        run: |
+          if [ -n "$RABBITMQ_TRUSTSTORE_BASE64" ]; then
+            mkdir -p src/main/resources/certs
+            echo "$RABBITMQ_TRUSTSTORE_BASE64" | base64 -d > src/main/resources/certs/rabbitmq-truststore.jks
+            echo "Truststore incluido en el JAR"
+          else
+            echo "ADVERTENCIA: falta RABBITMQ_TRUSTSTORE_BASE64; RabbitMQ fallará en QA/PROD"
+          fi
 
-    - name: Subir reporte JaCoCo
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: jacoco-report
-        path: target/site/jacoco/
+      - name: Compilar, probar y verificar cobertura
+        run: mvn -B clean verify
 
-  # 2. Construir y subir imagen a Docker Hub
-  docker-build-push:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-    - name: Checkout del código
-      uses: actions/checkout@v4
+      - name: Publicar JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ms-pagos-jar
+          path: target/${{ env.JAR_NAME }}
+          retention-days: 7
 
-    - name: Iniciar sesión en Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Configurar Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Construir y subir la imagen
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: |
-          ${{ env.DOCKER_IMAGE }}:latest
-          ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
-
-  # 3. Desplegar en QA (Solo en rama develop)
   deploy-qa:
-    needs: docker-build-push
-    runs-on: ubuntu-latest
+    name: Deploy QA (App Service)
+    needs: build-and-test
     if: github.ref == 'refs/heads/develop'
-    steps:
-    - name: Login en Azure
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Desplegar en Azure Container App QA
-      uses: azure/container-apps-deploy-action@v1
-      with:
-        resourceGroup: ${{ env.RESOURCE_GROUP }}
-        containerAppName: ${{ env.CONTAINER_APP_QA }}
-        imageToDeploy: ${{ env.DOCKER_IMAGE }}:latest
-
-  # 4. Desplegar en PROD (Rama main/master con aprobación)
-  deploy-prod:
-    needs: docker-build-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    environment: production # Requiere aprobación manual en GitHub
+    environment: qa
     steps:
-    - name: Login en Azure
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ms-pagos-jar
+          path: deploy
 
-    - name: Desplegar en Azure Container App PROD
-      uses: azure/container-apps-deploy-action@v1
-      with:
-        resourceGroup: ${{ env.RESOURCE_GROUP }}
-        containerAppName: ${{ env.CONTAINER_APP_PROD }}
-        imageToDeploy: ${{ env.DOCKER_IMAGE }}:latest
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Desplegar JAR en App Service QA
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_QA }}
+          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          package: deploy/${{ env.JAR_NAME }}
+
+  deploy-prod:
+    name: Deploy PROD (App Service)
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ms-pagos-jar
+          path: deploy
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Desplegar JAR en App Service PROD
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
+          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          package: deploy/${{ env.JAR_NAME }}
