@@ -2,7 +2,7 @@ name: CI/CD Container Apps · ms-pagos-suscripciones
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, master]
   pull_request:
     branches: [develop]
 
@@ -59,7 +59,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
 
   deploy:
-    name: Deploy Container App
+    name: Deploy Container App QA
     needs: build-and-push
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
@@ -69,26 +69,27 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Actualizar Container App
+      - name: Actualizar Container App QA
         run: |
           az containerapp update \
             --name "${{ secrets.AZURE_CONTAINER_APP }}" \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}" 
-  
-  deploy-prod:
-  name: Deploy PROD
-  needs: build-and-push
-  if: github.ref == 'refs/heads/master'
-  runs-on: ubuntu-latest
-  environment: production
-  steps:
-    - uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+            --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}"
 
-    - run: |
-        az containerapp update \
-          --name "${{ secrets.AZURE_CONTAINER_APP_PROD }}" \
-          --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-          --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}"
+  deploy-prod:
+    name: Deploy PROD
+    needs: build-and-push
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Actualizar Container App PROD
+        run: |
+          az containerapp update \
+            --name "${{ secrets.AZURE_CONTAINER_APP_PROD }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}"
