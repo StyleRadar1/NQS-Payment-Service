@@ -195,35 +195,17 @@ flowchart TD
     class INFRA_IN,INFRA_OUT,REST,AMQP_IN,JPA_REPO,RABBIT_PUB,REDIS_ADAPTER infra;
 ```
 
-<div align="center">
-  <img src="docs/evidencias/diagrama-hexagonal.png" width="90%" alt="Diagrama Hexagonal" />
-</div>
-
 ### Estructura Oficial de Paquetes en `src/main/java/`
 
 ```text
-src/main/java/com/styleradar/pagos_suscripciones/
-├── domain/                                  <-- NÚCLEO DE DOMINIO (Cero dependencias externas)
-│   ├── model/                               <-- Entidades y Agregados raíz
-│   ├── valueobject/                         <-- Value Objects inmutables (PrecioCop, Talla, UUIDv7)
-│   ├── event/                               <-- Definición de Eventos de Dominio
-│   └── exception/                           <-- Excepciones de reglas de negocio
-├── application/                             <-- CAPA DE APLICACIÓN (Casos de Uso)
-│   ├── port/
-│   │   ├── in/                              <-- Input Ports (Interfaces para controladores)
-│   │   └── out/                             <-- Output Ports (Interfaces para repositorios y broker)
-│   ├── usecase/                             <-- Implementación de casos de uso
-│   └── dto/                                 <-- DTOs de entrada y salida (Java Records)
-└── infrastructure/                          <-- CAPA DE INFRAESTRUCTURA (Adaptadores)
-    ├── adapter/
-    │   ├── in/
-    │   │   ├── rest/                        <-- Spring REST Controllers y OpenAPI Spec
-    │   │   └── amqp/                        <-- Consumidores de eventos RabbitMQ
-    │   └── out/
-    │       ├── persistence/                 <-- Spring Data JPA Repositories y Entidades SQL
-    │       ├── messaging/                   <-- Productores RabbitMQ (AmqpTemplate)
-    │       └── cache/                       <-- Clientes Redis (RedisTemplate / Redlock)
-    └── config/                              <-- Beans de configuración Spring (Seguridad, AMQP, DB)
+domain/        Java puro: Plan, Suscripcion, OrdenPago, Monto, enums, eventos y excepciones
+application/   puertos in/out, DTOs, casos de uso, schedulers y servicios de aplicación
+infrastructure/adapter/in/rest      controladores REST, webhook, health
+infrastructure/adapter/out/persistence  JPA + PostgreSQL/Flyway
+infrastructure/adapter/out/payment      Mercado Pago (Feign) y mock dev/test
+infrastructure/adapter/out/cache        Redis SETNX
+infrastructure/adapter/out/messaging    RabbitMQ publisher
+infrastructure/config                   seguridad, Rabbit, Redis, OpenAPI, reloj
 ```
 
 ---
