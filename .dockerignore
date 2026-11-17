@@ -1,0 +1,15 @@
+target/
+.sonar/
+.sonar-token
+.git/
+.github/
+.idea/
+.vscode/
+*.iml
+.env
+.env.*
+*.log
+docs/
+tools/
+infra/
+README.md

@@ -1,0 +1,47 @@
+server:
+  port: ${SERVER_PORT:8400}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+  jpa:
+    show-sql: false
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT:5671}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    ssl:
+      trust-store: ${RABBITMQ_TRUST_STORE:classpath:certs/rabbitmq-truststore.jks}
+      trust-store-password: ${RABBITMQ_TRUSTSTORE_PASSWORD:changeit}
+      trust-store-type: ${RABBITMQ_TRUST_STORE_TYPE:PKCS12}
+      verify-hostname: true
+
+mercadopago:
+  access-token: ${MP_ACCESS_TOKEN}
+  public-key: ${MP_PUBLIC_KEY}
+  webhook-secret: ${MP_WEBHOOK_SECRET}
+  webhook-url: ${MP_WEBHOOK_URL}
+  back-url: ${MP_BACK_URL}
+
+styleradar:
+  security:
+    jwt:
+      enabled: true
+      require-token: true
+      public-key: ${JWT_PUBLIC_KEY:}
+      secret-base64: ${JWT_SECRET_BASE64:}
+
+management:
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    edu.dosw.styleradar.pagos: INFO

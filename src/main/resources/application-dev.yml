@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:styleradar_pagos}
+    username: ${DB_USER:sr_user}
+    password: ${DB_PASSWORD:sr_password}
+  jpa:
+    show-sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    ssl:
+      enabled: false
+
+mercadopago:
+  access-token: ${MP_ACCESS_TOKEN:TEST-MOCK}
+  webhook-secret: ${MP_WEBHOOK_SECRET:dev-webhook-secret}
+
+styleradar:
+  security:
+    jwt:
+      enabled: false
+      require-token: false
+  scheduling:
+    enabled: ${SCHEDULING_ENABLED:true}
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    edu.dosw.styleradar.pagos: DEBUG

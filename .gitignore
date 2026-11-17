@@ -1,24 +1,32 @@
-# Compiled class file
+# Build
+target/
+.sonar/
+.sonar-token
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+!.mvn/wrapper/maven-wrapper.jar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+*.jks
+*.p12
+*.pem
+*.key
+certs/*
+!certs/README.md
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Sistema y logs
+.DS_Store
+Thumbs.db
+*.log
+logs/
