@@ -149,51 +149,22 @@ Desarrollado y mantenido por el **Squad `NQS: No Queremos Scrum`** para la asign
 
 El microservicio implementa **Arquitectura Hexagonal (Puertos y Adaptadores)** combinada con **Domain-Driven Design (DDD)**. El núcleo de negocio permanece 100% puro y aislado de frameworks, bases de datos o brokers de mensajería.
 
-### Diagrama Interactivo de Capas (Mermaid)
+## 3.1 Diagrama de CLases
 
-```mermaid
-flowchart TD
-    subgraph INFRA_IN["Infraestructura de Entrada (Driving Adapters)"]
-        REST["REST Controller<br>(Spring Web / OpenAPI 3)"]
-        AMQP_IN["RabbitMQ Listener<br>(Spring AMQP Consumer)"]
-    end
+![DiagramaClases](/docs/uml/StyleRadar-Pagos-DiagramaClases.png)
 
-    subgraph APP["Capa de Aplicación (Application Layer)"]
-        IN_PORT["Input Ports<br>(Interfaces de Casos de Uso)"]
-        USE_CASES["Use Cases Implementation<br>(Servicios de Aplicación)"]
-        OUT_PORT["Output Ports<br>(Interfaces de Persistencia y Mensajería)"]
-    end
+## 3.2 Diagrama Entidad-Relación de Base de Datos (PostgreSQL 16)
 
-    subgraph DOMAIN["Núcleo de Dominio (Domain Core - Java Puro)"]
-        ENTITIES["Entidades de Dominio<br>(Entities & Aggregates)"]
-        VO["Value Objects<br>(Inmutables & Reglas de Validación)"]
-        EVENTS["Domain Events<br>(Eventos de Negocio)"]
-        EXCEPTIONS["Domain Exceptions<br>(Excepciones de Negocio)"]
-    end
+![Diagrama ER](/docs/uml/StyleRadar-Pagos-DiagramaER.png)
 
-    subgraph INFRA_OUT["Infraestructura de Salida (Driven Adapters)"]
-        JPA_REPO["JPA Adapter<br>(Spring Data / PostgreSQL 16)"]
-        RABBIT_PUB["RabbitMQ Publisher<br>(Spring AMQP Producer)"]
-        REDIS_ADAPTER["Redis Adapter<br>(Caché & Distributed Locks)"]
-    end
+Reglas e índices relevantes:
 
-    REST --> IN_PORT
-    AMQP_IN --> IN_PORT
-    IN_PORT --> USE_CASES
-    USE_CASES --> DOMAIN
-    USE_CASES --> OUT_PORT
-    OUT_PORT --> JPA_REPO
-    OUT_PORT --> RABBIT_PUB
-    OUT_PORT --> REDIS_ADAPTER
+- `planes.tipo_suscriptor` ∈ `USUARIO`/`ALMACEN`; `precio >= 0`.
+- `suscripciones.estado` ∈ `PENDIENTE`/`ACTIVA`/`SUSPENDIDA`.
+- Índice único parcial `uq_suscripcion_activa_pendiente`: un suscriptor no puede tener dos suscripciones `ACTIVA` o `PENDIENTE` simultáneas.
+- `ordenes_pago.estado` ∈ `PENDIENTE`/`APROBADO`/`RECHAZADO`/`REEMBOLSADO`; `monto_reembolsado <= monto`.
+- `ordenes_pago.id_pago_externo` y `webhooks_log.id_pago_externo` son únicos: segunda barrera de idempotencia.
 
-    classDef domain fill:#EDE7FF,stroke:#5600EF,stroke-width:2px,color:#0C0C12;
-    classDef app fill:#F8FAFC,stroke:#C4B5FD,stroke-width:2px,color:#0C0C12;
-    classDef infra fill:#12063A,stroke:#5600EF,stroke-width:1.5px,color:#FFFFFF;
-
-    class DOMAIN,ENTITIES,VO,EVENTS,EXCEPTIONS domain;
-    class APP,IN_PORT,USE_CASES,OUT_PORT app;
-    class INFRA_IN,INFRA_OUT,REST,AMQP_IN,JPA_REPO,RABBIT_PUB,REDIS_ADAPTER infra;
-```
 
 ### Estructura Oficial de Paquetes en `src/main/java/`
 
@@ -218,11 +189,11 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 
 ### Matriz Oficial de Enlaces por Entorno (PROD, QA, LOCAL)
 
-| Entorno | Estado | Propósito | URL Base del Servicio | Swagger OpenAPI UI | Health Check |
-| :--- | :---: | :--- | :--- | :--- | :--- |
-| **Producción (PROD)** | Active | Despliegue productivo de StyleRadar | `  https://ms-pagos-prod.happyriver-65727909.northcentralus.azurecontainerapps.io` | [Swagger UI PROD](  https://ms-pagos-prod.happyriver-65727909.northcentralus.azurecontainerapps.io/swagger-ui/index.html) | [`/actuator/health`](https://ms-pagos-prod.happyriver-65727909.northcentralus.azurecontainerapps.io/actuator/health) |
-| **Calidad / Pruebas (QA)** | Active | Pruebas integradas de Sprint y QA | `https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io` | [Swagger UI QA](https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io/swagger-ui/index.html) | [`/actuator/health`](https://ms-pagos-qa.happyriver-65727909.northcentralus.azurecontainerapps.io/actuator/health) |
-| **Desarrollo Local (DEV)** | Local | Entorno de desarrollo local en máquina | `http://localhost:8400` | [Swagger UI Local](http://localhost:8400/swagger-ui.html) | [`/actuator/health`](http://localhost:8400/actuator/health) |
+| Entorno | Estado | URL base | Swagger UI | Health |
+| :--- | :---: | :--- | :--- | :--- |
+| **QA** | Activo | `https://ca-styleradar-pagos-juangv1.lemonplant-91cfa5ac.northcentralus.azurecontainerapps.io` | [Swagger QA](https://ca-styleradar-pagos-juangv1.lemonplant-91cfa5ac.northcentralus.azurecontainerapps.io/swagger-ui/index.html) | [`/actuator/health`](https://ca-styleradar-pagos-juangv1.lemonplant-91cfa5ac.northcentralus.azurecontainerapps.io/actuator/health) |
+| **PROD** | Pendiente | Pendiente de despliegue | Pendiente | Pendiente |
+| **Local** | Local | `http://localhost:8400` | `http://localhost:8400/swagger-ui.html` | `http://localhost:8400/actuator/health` |
 
 * **Especificación OpenAPI (Contrato JSON Schema):** `http://localhost:8400/v3/api-docs` (o `/v3/api-docs` en los dominios de PROD y QA).
 
@@ -234,86 +205,75 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 
 ### Tabla de Endpoints Expuestos
 
-|  Método  | Endpoint                            | Descripción                                      | Rol Requerido         |      Códigos HTTP      | 
-| :--------: | :---------------------------- | :----------------------------------------- | :-------------------- | :-----------------------: |
-|  `POST`  | `/api/v1/suscripciones/iniciar` | Crea una suscripción en estado PENDIENTE, genera una orden y retorna el link de pago. | Público (Vía Gateway) |          `201`, `400`, `500`          |
-|  `GET`  | `/api/v1/suscripciones/{suscriptorId}` | Consulta los detalles y estado actual de la suscripción de un usuario/almacén. | Público (Vía Gateway) |          `200`, `404`          |
-|  `POST`  | `/api/v1/suscripciones/{suscriptorId}/cancelar` | Cancela la auto-renovación en MP. Mantiene activo el tiempo ya pagado. | Público (Vía Gateway) |          `200`, `404`          |
-|  `PUT`  | `/api/v1/suscripciones/{suscriptorId}/cambiar-plan` | Cambia de plan. Si es Upgrade, retorna link de pago por la diferencia. Si es Downgrade, lo programa. | Público (Vía Gateway) |          `200`, `400`          |
-|  `GET`  | `/api/v1/pagos/historial` | Consulta el historial de pagos propios del usuario autenticado. | JWT / Header X-User-Id |          `200`, `401`          |
-|  `POST`  | `/api/v1/pagos/{ordenId}/reembolsar` | Solicita reembolso total o parcial de un pago aprobado. | Requiere rol ADMIN (JWT) |          `200`, `400`, `403`          |
-|  `POST`  | `/api/v1/pagos/{ordenId}/reintentar` | Reintenta un pago rechazado/pendiente generando una nueva orden. | JWT / Header X-User-Id |          `200`, `400`          |
-|  `GET`  | `/api/v1/admin/pagos` | Consulta global de todos los pagos de la plataforma, filtrable por estado. | Requiere rol ADMIN (JWT) |          `200`, `403`          |
-|  `POST`  | `/api/v1/webhooks/mercadopago` | Recibe notificaciones de MP, valida HMAC, actualiza BD y publica evento. | Público + HMAC (x-signature) |          `200`, `400`          |
-|  `GET`  | `/api/v1/health` | Verifica el estado del microservicio (Actuator / Custom). | Público |          `200`          |
-
+| Método | Endpoint | Autorización | Éxito | Errores |
+| :---: | :--- | :--- | :---: | :--- |
+| `POST` | `/api/v1/suscripciones/iniciar` | JWT / `X-User-Id` | `201` | `400`, `403`, `422` |
+| `GET` | `/api/v1/suscripciones/{suscriptorId}` | Titular o `ADMIN_STYLERADAR` | `200` | `401`, `403`, `404` |
+| `POST` | `/api/v1/suscripciones/{suscriptorId}/cancelar` | Titular | `200` | `400`, `403`, `404`, `422` |
+| `GET` | `/api/v1/pagos/historial` | JWT / `X-User-Id` | `200` | `401` |
+| `POST` | `/api/v1/pagos/{ordenId}/reintentar` | Titular | `200` | `400`, `403`, `404`, `422` |
+| `POST` | `/api/v1/pagos/{ordenId}/reembolsar` | `ADMIN_STYLERADAR` | `200` | `400`, `403`, `404`, `422` |
+| `GET` | `/api/v1/admin/pagos?estado=` | `ADMIN_STYLERADAR` | `200` | `403` |
+| `GET` | `/api/v1/planes` | Autenticado | `200` | `401` |
+| `POST` | `/api/v1/webhooks/mercadopago` | HMAC `x-signature` | `200` | `400` |
+| `GET` | `/api/v1/health` | Público | `200` | — |
+| `GET` | `/actuator/health` | Público | `200`/`503` | — |
 <details>
-<summary><b>Click para ver Ejemplo Interactivo de Request y Response JSON (Payloads)</b></summary>
+<summary><b>Ejemplos de request/response</b></summary>
 
 <br>
 
-#### Ejemplo Request (`POST /api/v1/suscripciones/iniciar`)
+**Crear suscripción de usuario**
 
-```bash
-curl -X POST \
-  "http://localhost:8400/api/v1/suscripciones/iniciar" \
-  -H "accept: text/plain" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "suscriptorId": "USER-TEST-FINAL",
-    "planId": 2,
-    "tipoSuscriptor": "USUARIO"
-    "emailPayer": "test_user_117646358391238183361@testuser.com"
-}'
+```http
+POST /api/v1/suscripciones/iniciar
+Authorization: Bearer <JWT>
+Content-Type: application/json
 ```
 
-#### Ejemplo Response Exitoso (`200 OK`)
-
-```json
-https://www.mercadopago.com.co/subscriptions/checkout?preapproval_id=c388e668fbc87474b129d889e98732888activation=true
-```
-#### Response exitoso (`PUT /api/v1/suscripciones/{suscriptorId}/cambiar-plan`)
- 
 ```json
 {
-  "tipo": "UPGRADE",
-  "init_point": "https://www.mercadopago.com.co/...",
-  "mensaje": "Pague la diferencia para activar el nuevo plan inmediatamente."
+  "tipoSuscriptor": "USUARIO",
+  "emailPayer": "test_user_117646358391238183361@testuser.com",
+  "planId": 2
 }
 ```
- 
-#### Response exitoso (`GET /api/v1/admin/pagos`)
- 
-Array directo (actualmente **no paginado**):
- 
-```json
-[
-  {
-    "id": 1,
-    "suscripcionId": 100,
-    "monto": { "valor": 14900.00, "moneda": "COP" },
-    "estado": "APROBADO",
-    "idPagoExterno": "MP-12345",
-    "montoReembolsado": { "valor": 0.00, "moneda": "COP" },
-    "motivoReembolso": null,
-    "fechaCreacion": "2026-11-11T10:00:00"
-  }
-]
-```
- 
-#### Response de Error (`GlobalExceptionHandler`)
- 
-Aplica para cualquier `400`, `403`, `404`, `409` y `500`:
- 
+
 ```json
 {
-  "timestamp": "2026-11-11T22:15:30.123",
+  "suscripcionId": 100,
+  "ordenId": 10,
+  "estado": "PENDIENTE",
+  "initPoint": "https://www.mercadopago.com.co/subscriptions/checkout?preapproval_id=..."
+}
+```
+
+**Crear suscripción de almacén**
+
+```json
+{
+  "tipoSuscriptor": "ALMACEN",
+  "emailPayer": "test_user_...@testuser.com",
+  "nit": "900123456-7",
+  "almacenId": "a1111111-1111-1111-1111-111111111111"
+}
+```
+
+`almacenId` es obligatorio para `ALMACEN`: es el UUID que usa `ms-item-catalogo` para suspender el catálogo.
+
+**Error estándar**
+
+```json
+{
+  "timestamp": "2026-11-17T02:15:30.123",
   "status": 400,
   "error": "INVALID_STATE",
   "message": "La suscripción ya está activa. No se requiere reintentar el pago.",
-  "path": "/api/v1/pagos/1/reintentar"
+  "path": "/api/v1/pagos/1/reintentar",
+  "validationErrors": []
 }
 ```
+
 </details>
 
 ---
@@ -324,46 +284,17 @@ Aplica para cualquier `400`, `403`, `404`, `409` y `500`:
 
 La comunicación asíncrona entre microservicios se orquesta a través de **RabbitMQ 3.12**. Este microservicio actúa como **productor** del evento de confirmación de pago.
  
-* **Exchange de Pagos:** `styleradar.payments.exchange`
-* **Rol actual:** Productor. No consume eventos de otros microservicios.
-### Matriz de Eventos AMQP
- 
-|       Tipo       | Routing Key / Evento | Exchange                       | Microservicio Emisor / Receptor | Cuándo se Dispara / Acción |
-| :---------------: | :------------------- | :----------------------------- | :------------------------------ | :-------------------------- |
-| **PUBLICA** | `pago.confirmado`    | `styleradar.payments.exchange` | `ms-pagos-suscripciones`        | Se publica tras recibir el webhook de Mercado Pago, validar la firma HMAC, garantizar idempotencia (Redis SETNX) y actualizar la BD. |
-| **CONSUME** | N/A                  | N/A                            | N/A                             | Actualmente no consume eventos ni consulta a otros microservicios para funcionar. |
- 
-### Consumidores del Evento `pago.confirmado`
- 
-| Microservicio Consumidor | Acción esperada |
-| :--- | :--- |
-| `ms-usuarios` | Aplica los beneficios del plan (por ejemplo, límites de wishlist). |
-| `ms-tiendas` (o `ms-identidad`) | Aplica los beneficios del plan (por ejemplo, límites de catálogo). |
- 
-<details>
-<summary><b>Click para ver Esquema JSON del Evento Publicado (con Idempotencia)</b></summary>
-<br>
-> Esquema ilustrativo del sobre del evento. Los campos de `data` deben validarse contra la clase real del evento en el código.
- 
-```json
-{
-  "eventId": "018e3a2b-3333-7000-8000-000000000003",
-  "eventType": "pago.confirmado",
-  "timestamp": "2026-11-11T14:30:00Z",
-  "producer": "ms-pagos-suscripciones",
-  "correlationId": "corr-uuid-9999",
-  "data": {
-    "ordenId": 1,
-    "suscriptorId": "USER-123",
-    "tipoSuscriptor": "USUARIO",
-    "planId": 2,
-    "estado": "APROBADO"
-  }
-}
-```
- 
-</details>
+- **Exchange:** `styleradar.exchange` (topic, durable).
+- **Dead Letter Exchange:** `styleradar.dlx`.
+- **Rol:** productor. No consume eventos de otros microservicios.
+- **Formato:** JSON UTF-8 con sobre `{eventId, eventType, version, timestamp, producer, correlationId, data}`.
 
+### Matriz de Eventos AMQP
+| Tipo | Routing key | Cuándo | Consumidores |
+| :---: | :--- | :--- | :--- |
+| **PUBLICA** | `styleradar.pagos.pago.confirmado` | Pago aprobado y suscripción activada/extendida | Catálogo (pendiente reactivación); Usuarios/Tiendas/Probador/Notificaciones (pendientes) |
+| **PUBLICA** | `styleradar.pagos.suscripcion.suspendida` | Vencimiento sin pago; job 00:10 | Catálogo (implementado); Inventario/Notificaciones (pendientes de key/payload) |
+| **CONSUME** | N/A | — | — |
 
 ---
 
@@ -373,19 +304,21 @@ La comunicación asíncrona entre microservicios se orquesta a través de **Rabb
 
 El stack del microservicio cumple con el estándar unificado de arquitectura de StyleRadar:
 
-| Capa / Componente                | Tecnología       | Versión   | Justificación Técnica                                                                        |
-| :------------------------------- | :---------------- | :--------- | :--------------------------------------------------------------------------------------------- |
-| **Lenguaje Core**          | Java LTS          | `21`     | Virtual Threads (Project Loom) para concurrencia masiva I/O sin saturar hilos del OS.          |
-| **Framework Empresarial**  | Spring Boot       | `3.2.5`  | Gestión declarativa de configuración, ecosistema nativo Spring Data y Spring AMQP.           |
-| **Base de Datos**          | PostgreSQL        | `16`     | Integridad transaccional ACID. Tablas: `planes`, `suscripciones`, `ordenes_pago`, `webhooks_log`. |
-| **Migraciones de BD**      | Flyway            | `10.10.0`   | Control de versiones reproducible de scripts SQL en arranque; valida el esquema real.           |
-| **Broker de Mensajería**  | RabbitMQ          | `3.12+`  | Publicación del evento `pago.confirmado` en `styleradar.payments.exchange`.                    |
-| **Caché en Memoria**      | Redis             | `7.x`    | Bloqueo `SETNX` para idempotencia en el procesamiento de webhooks de Mercado Pago.           |
-| **Cliente HTTP Declarativo** | Spring Cloud OpenFeign | `2023.0.1` | Consumo de las APIs de Mercado Pago (Preapproval para suscripciones y Payments para reembolsos). |
-| **Testing Core**           | JUnit 5 + Mockito | `5.10.x` | Pruebas unitarias sobre el núcleo de dominio sin inicializar el contenedor Spring.            |
-| **Testing Integración**   | Testcontainers    | `1.19.7` | Instanciación automática de PostgreSQL y RabbitMQ en Docker durante `mvn verify`.          |
-| **Métricas de Cobertura** | JaCoCo Plugin     | `0.8.11` | Verificación estricta de cobertura mínima (≥ 85%) como regla de fallo en el build.     |
-
+| Capa / Componente | Tecnología | Versión | Justificación |
+| :--- | :--- | :--- | :--- |
+| Lenguaje | Java LTS | `21` | Virtual Threads, `records`, `sealed`, rendimiento I/O |
+| Framework | Spring Boot | `3.2.5` | Web, Security, Data JPA, AMQP, Actuator |
+| Base de datos | PostgreSQL | `16` | ACID, `JSONB` para límites de plan, índices parciales |
+| Migraciones | Flyway | `10.10.0` | Esquema reproducible V1–V5 |
+| Broker | RabbitMQ | `3.13` (broker QA) | `styleradar.exchange`, TLS 5671 |
+| Caché | Redis | `7` | `SETNX` para idempotencia |
+| Cliente HTTP | Spring Cloud OpenFeign | `2023.0.1` | Preapproval, Payments, Refunds |
+| Seguridad | Spring Security + JJWT | `0.12.5` | JWT HS256 local; sin llamar a ms-auth |
+| Documentación | springdoc OpenAPI | `2.5.0` | Swagger UI, `v3/api-docs` |
+| Pruebas | JUnit 5, Mockito, AssertJ | Spring Boot Test | Unitarias, MVC, integración |
+| Integración | Testcontainers | `1.19.7` | PostgreSQL real cuando hay Docker |
+| Cobertura | JaCoCo | `0.8.11` | Gate ≥ 85% |
+| Calidad | SonarQube | Community 26.11 (local) | Quality Gate PASSED, 0 issues |
 ---
 
 <a id="7-cómo-ejecutar-local-y-con-docker"></a>
@@ -398,34 +331,32 @@ El stack del microservicio cumple con el estándar unificado de arquitectura de 
 * **Apache Maven:** Versión 3.9+ instalada (`mvn -version`).
 * **Docker Engine & Docker Compose:** Versión 24+ en ejecución (`docker --version`).
 
-### Ejecución Local con Maven (Perfil Dev)
-
+### Ejecución Local con Docker Compose
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/StyleRadar/NQS-Payment-Service.git
+git clone https://github.com/StyleRadar1/NQS-Payment-Service.git
 cd NQS-Payment-Service
+cp .env.example .env
+docker compose --profile app up --build
+```
 
-# 2. Levantar servicios de infraestructura en Docker (PostgreSQL, Redis, RabbitMQ)
-docker compose up -d postgres rabbitmq redis
-
-# 3. Ejecutar el microservicio localmente
+### Ejecución Local con Maven
+```bash
+docker compose up -d postgres redis rabbitmq
 mvn clean spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+- Perfil `dev`: JWT desactivado, Mercado Pago mock, Rabbit local sin TLS.
+- Perfil `test`: H2 en memoria, MP mock, sin Rabbit, JWT desactivado. Útil para probar endpoints sin ms-auth:
+  ```bash
+  mvn spring-boot:run -Dspring-boot.run.profiles=test
+  ```
+- Perfil `qa`: PostgreSQL/Redis/Rabbit reales, JWT HS256, Mercado Pago sandbox.
 
-### Comprobación de Salud (Health Check)
+### Health local
 
 ```bash
-curl -s http://localhost:8400/actuator/health | jq .
-# Esperado: {"status":"UP","components":{"db":{"status":"UP"},"rabbit":{"status":"UP"}}}
+curl -s http://localhost:8400/actuator/health
+curl -s http://localhost:8400/api/v1/health
 ```
-
-<div align="center">
-
-<img src="docs/evidencias/docker-compose-ps.png" width="90%" alt="Docker Compose PS" />
-          
-</div>
-
-
 ---
 
 <a id="8-variables-de-entorno"></a>
@@ -434,25 +365,38 @@ curl -s http://localhost:8400/actuator/health | jq .
 
 Todas las configuraciones sensibles y dependientes de entorno se externalizan mediante variables de sistema conformes al estándar **Twelve-Factor App**.
 
-| Variable                   | Descripción                                 | Valor por Defecto (`dev`) | Requerido en Prod |
-| :------------------------- | :------------------------------------------- | :-------------------------- | :---------------: |
-| `SERVER_PORT`            | Puerto de escucha HTTP del microservicio     | `8400`                    |        Sí        |
-| `SPRING_PROFILES_ACTIVE` | Perfil de configuración Spring Boot activo  | `dev`                     |        Sí        |
-| `DB_HOST`                | Hostname o IP del servidor PostgreSQL        | `localhost`               |        Sí        |
-| `DB_PORT`                | Puerto de conexión a PostgreSQL             | `5432`                    |        Sí        |
-| `DB_NAME`                | Nombre de la base de datos aislada           | `suscripciones_pagos`          |        Sí        |
-| `DB_USER`                | Usuario de conexión a la base de datos      | `styleradar_user`         |        Sí        |
-| `DB_PASSWORD`            | Contraseña del usuario de base de datos     | `secret_dev_pass`         |        Sí        |
-| `RABBITMQ_HOST`          | Hostname del broker de mensajería           | `localhost`               |        Sí        |
-| `RABBITMQ_PORT`          | Puerto AMQP de RabbitMQ                      | `5672`                    |        Sí        |
-| `RABBITMQ_USERNAME`      | Usuario de conexión a RabbitMQ              | `guest`                   |        Sí        |
-| `RABBITMQ_PASSWORD`      | Contraseña de conexión a RabbitMQ          | `guest`                   |        Sí        |
-| `REDIS_HOST`             | Hostname del servidor Redis (idempotencia de webhooks) | `localhost`        |        Sí        |
-| `REDIS_PORT`             | Puerto de conexión a Redis                   | `6379`                    |        Sí        |
-| `MP_ACCESS_TOKEN`        | Access Token de Mercado Pago (sandbox en dev) | `<MP_SANDBOX_TOKEN>`      |        Sí        |
-| `MP_PUBLIC_KEY`          | Inicializar la integracion de pagos y proteger la informacion enviada | `<MP_PUBLIC_KEY>`      |        Sí        |
-| `MP_WEBHOOK_SECRET`      | Secreto para validar la firma HMAC (`x-signature`) del webhook | `<MP_WEBHOOK_SECRET>` |        Sí        |
-| `JWT_PUBLIC_KEY`         | Clave pública RSA/RS256 para validar tokens | `<PATH_OR_PEM_VALUE>`     |        Sí        |
+| Variable | Descripción | Ejemplo / default |
+| :--- | :--- | :--- |
+| `SERVER_PORT` | Puerto HTTP | `8400` |
+| `SPRING_PROFILES_ACTIVE` | Perfil | `dev`, `qa`, `prod` |
+| `SPRING_DATASOURCE_URL` | JDBC PostgreSQL | `jdbc:postgresql://host:5432/styleradar_pagos?sslmode=require` |
+| `SPRING_DATASOURCE_USERNAME` | Usuario DB | `styleradaradmin` |
+| `SPRING_DATASOURCE_PASSWORD` | Password DB | secreto |
+| `SPRING_DATA_REDIS_HOST` | Host Redis | `redis-...redis.cache.windows.net` |
+| `SPRING_DATA_REDIS_PORT` | Puerto Redis | `6380` |
+| `SPRING_DATA_REDIS_PASSWORD` | Key Redis | secreto |
+| `SPRING_DATA_REDIS_SSL_ENABLED` | TLS Redis | `true` |
+| `SPRING_DATA_REDIS_DATABASE` | DB lógica Redis | `0` QA / `1` PROD |
+| `RABBITMQ_HOST` | Host Rabbit | `styleradar-rabbitmq-qa...` |
+| `RABBITMQ_PORT` | Puerto AMQPS | `5671` |
+| `RABBITMQ_USER` | Usuario | `ms_pagos` |
+| `RABBITMQ_PASSWORD` | Password | secreto |
+| `RABBITMQ_VHOST` | Vhost | `/` |
+| `RABBITMQ_SSL_ENABLED` | TLS | `true` |
+| `RABBITMQ_TRUST_STORE` | JKS | `file:/app/certs/rabbitmq-truststore.jks` |
+| `RABBITMQ_TRUSTSTORE_PASSWORD` | Password JKS | `changeit` |
+| `RABBITMQ_TRUST_STORE_TYPE` | Tipo | `PKCS12` |
+| `SPRING_RABBITMQ_SSL_ENABLED` | Propiedad canónica Spring | `true` |
+| `SPRING_RABBITMQ_SSL_TRUST_STORE` | Truststore canónico | `file:/app/certs/rabbitmq-truststore.jks` |
+| `SPRING_RABBITMQ_SSL_VERIFY_HOSTNAME` | Verificación hostname | `false` QA / `true` PROD |
+| `JWT_VALIDATION_ENABLED` | Validar JWT | `true` QA/PROD |
+| `JWT_REQUIRE_TOKEN` | Exigir token | `true` QA/PROD |
+| `JWT_SECRET_BASE64` | Secreto HS256 | secreto de ms-auth |
+| `MP_ACCESS_TOKEN` | Token MP | secreto backend |
+| `MP_PUBLIC_KEY` | Public key MP | frontend |
+| `MP_WEBHOOK_SECRET` | Secreto HMAC | secreto backend |
+| `MP_WEBHOOK_URL` | URL webhook | `https://.../api/v1/webhooks/mercadopago` |
+| `MP_BACK_URL` | Retorno frontend | `https://frontend/suscripciones` |
 
 <details>
 <summary><b>Click para copiar la Plantilla de Archivo .env.example</b></summary>
@@ -510,8 +454,6 @@ mvn clean verify
 # Generar únicamente el reporte HTML de JaCoCo
 mvn jacoco:report
 ```
-
-* **Ruta del Reporte HTML:** `target/site/jacoco/index.html`
 
 <div align="center">
   <img src="docs/evidencias/cobertura-jacoco.png" width="90%" alt="Reporte JaCoCo" />
