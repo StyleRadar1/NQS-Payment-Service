@@ -1,6 +1,6 @@
 spring:
   flyway:
-    enabled: false # Desactiva Flyway en los tests
+    enabled: false # Desactive Flyway en los tests
   jpa:
     hibernate:
       ddl-auto: create-drop # Deja que Hibernate cree las tablas en H2

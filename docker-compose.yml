@@ -3,7 +3,7 @@ services:
     image: postgres:16
     container_name: styleradar-postgres
     environment:
-      POSTGRES_DB: styleradar_pagos
+      POSTGRES_DB: styleradar_payments
       POSTGRES_USER: sr_user
       POSTGRES_PASSWORD: sr_password
     ports:
@@ -11,7 +11,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sr_user -d styleradar_pagos"]
+      test: ["CMD-SHELL", "pg_isready -U sr_user -d styleradar_payments"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,16 +42,16 @@ services:
       timeout: 10s
       retries: 5
 
-  ms-pagos:
+  ms-payments:
     build: .
-    container_name: styleradar-ms-pagos
+    container_name: styleradar-ms-payments
     profiles: ["app"]
     ports:
       - "8400:8400"
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8400
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/styleradar_pagos
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/styleradar_payments
       SPRING_DATASOURCE_USERNAME: sr_user
       SPRING_DATASOURCE_PASSWORD: sr_password
       SPRING_DATA_REDIS_HOST: redis
@@ -75,3 +75,4 @@ services:
 
 volumes:
   pgdata:
+    name: styleradar-pgdata-payments

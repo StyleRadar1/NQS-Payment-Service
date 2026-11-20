@@ -17,6 +17,7 @@ spring:
     password: ${RABBITMQ_PASSWORD}
     virtual-host: ${RABBITMQ_VHOST:/}
     ssl:
+      enabled: true
       trust-store: ${RABBITMQ_TRUST_STORE:classpath:certs/rabbitmq-truststore.jks}
       trust-store-password: ${RABBITMQ_TRUSTSTORE_PASSWORD:changeit}
       trust-store-type: ${RABBITMQ_TRUST_STORE_TYPE:PKCS12}
@@ -44,4 +45,4 @@ management:
 
 logging:
   level:
-    edu.dosw.styleradar.pagos: INFO
+    edu.dosw.styleradar.payments: INFO
