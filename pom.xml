@@ -12,10 +12,10 @@
     </parent>
 
     <groupId>edu.dosw.styleradar</groupId>
-    <artifactId>pagos-suscripciones</artifactId>
+    <artifactId>payments-subscriptions</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ms-pagos-suscripciones</name>
-    <description>Microservicio de Pagos y Suscripciones para StyleRadar</description>
+    <name>ms-payments-subscriptions</name>
+    <description>StyleRadar Payments and Subscriptions microservice</description>
 
     <properties>
         <java.version>21</java.version>
@@ -23,12 +23,12 @@
         <flyway.version>10.10.0</flyway.version>
         <springdoc.version>2.5.0</springdoc.version>
         <jjwt.version>0.12.5</jjwt.version>
-        <testcontainers.version>1.19.7</testcontainers.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
 
         <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
         <sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
-        <sonar.projectKey>styleradar-ms-pagos</sonar.projectKey>
-        <sonar.projectName>StyleRadar - Microservicio de Pagos</sonar.projectName>
+        <sonar.projectKey>styleradar-ms-payments</sonar.projectKey>
+        <sonar.projectName>StyleRadar - Payments Microservice</sonar.projectName>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>
             **/application/dto/**, **/infrastructure/config/**, **/*Application.java,
@@ -197,7 +197,7 @@
                 <version>0.8.11</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/PagosApplication.class</exclude>
+                        <exclude>**/PaymentsApplication.class</exclude>
                         <exclude>**/application/dto/**</exclude>
                         <exclude>**/infrastructure/adapter/out/persistence/entity/**</exclude>
                         <exclude>**/infrastructure/config/**</exclude>

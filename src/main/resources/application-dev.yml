@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:styleradar_pagos}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:styleradar_payments}
     username: ${DB_USER:sr_user}
     password: ${DB_PASSWORD:sr_password}
   jpa:
@@ -36,4 +36,4 @@ management:
 
 logging:
   level:
-    edu.dosw.styleradar.pagos: DEBUG
+    edu.dosw.styleradar.payments: DEBUG
