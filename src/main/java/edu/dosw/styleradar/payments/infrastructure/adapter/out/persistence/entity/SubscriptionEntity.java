@@ -35,7 +35,7 @@ public class SubscriptionEntity {
     @Column(name = "plan_id", nullable = false)
     private Long planId;
 
-    @Column(name = "plan_programado_id")
+    @Column(name = "scheduled_plan_id")
     private Long scheduledPlanId;
 
     @Column(name = "subscriber_id", nullable = false, length = 50)
