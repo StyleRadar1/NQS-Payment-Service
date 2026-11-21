@@ -47,6 +47,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void mapsMissingRouteTo404() throws Exception {
+        mockMvc.perform(get("/test/no-resource"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.instance").value("/test/no-resource"));
+    }
+
+    @Test
     void maps409() throws Exception {
         mockMvc.perform(get("/test/409"))
                 .andExpect(status().isConflict())

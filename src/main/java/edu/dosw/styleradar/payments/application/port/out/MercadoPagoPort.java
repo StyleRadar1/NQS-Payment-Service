@@ -8,6 +8,8 @@ public interface MercadoPagoPort {
 
     MercadoPagoPayment getPayment(String paymentId);
 
+    AuthorizedPayment getAuthorizedPayment(String authorizedPaymentId);
+
     void cancelPreapproval(String preapprovalId);
 
     record PreapprovalRequest(
@@ -26,6 +28,16 @@ public interface MercadoPagoPort {
             String status,
             String externalReference,
             String preapprovalId,
+            java.math.BigDecimal amount,
+            String currency) {
+    }
+
+    record AuthorizedPayment(
+            String id,
+            String status,
+            String externalReference,
+            String preapprovalId,
+            String paymentId,
             java.math.BigDecimal amount,
             String currency) {
     }
