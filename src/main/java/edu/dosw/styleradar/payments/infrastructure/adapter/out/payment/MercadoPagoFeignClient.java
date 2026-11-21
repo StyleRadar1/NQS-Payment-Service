@@ -4,6 +4,7 @@ import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.Cance
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PaymentResponse;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PreapprovalRequest;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PreapprovalResponse;
+import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.AuthorizedPaymentResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,10 @@ public interface MercadoPagoFeignClient {
     @GetMapping("/v1/payments/{id}")
     PaymentResponse getPayment(@RequestHeader("Authorization") String authorization,
                                @PathVariable("id") String id);
+
+    @GetMapping("/authorized_payments/{id}")
+    AuthorizedPaymentResponse getAuthorizedPayment(@RequestHeader("Authorization") String authorization,
+                                                   @PathVariable("id") String id);
 
     @PutMapping("/preapproval/{id}")
     PreapprovalResponse cancelPreapproval(@RequestHeader("Authorization") String authorization,

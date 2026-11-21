@@ -71,8 +71,14 @@ public class WebhookUseCase implements WebhookPort {
             throw new InvalidRequestException("La notificación no contiene el identificador del pago.");
         }
         if (notification.type() != null && !isPaymentNotification(notification.type())) {
-            log.info("Notification ignored for type {} (payment {})", notification.type(), notification.paymentId());
-            return;
+            if (!isAuthorizedPaymentNotification(notification.type())) {
+                log.info("Notification ignored for type {} (payment {})", notification.type(), notification.paymentId());
+                return;
+            }
+            notification = resolveAuthorizedPayment(notification);
+            if (notification == null) {
+                return;
+            }
         }
 
         String key = "lock:payment_" + notification.paymentId();
@@ -218,5 +224,33 @@ public class WebhookUseCase implements WebhookPort {
 
     private boolean isPaymentNotification(String type) {
         return "payment".equalsIgnoreCase(type);
+    }
+
+    private boolean isAuthorizedPaymentNotification(String type) {
+        return "subscription_authorized_payment".equalsIgnoreCase(type);
+    }
+
+    private NotificationPayment resolveAuthorizedPayment(NotificationPayment notification) {
+        try {
+            MercadoPagoPort.AuthorizedPayment authorized =
+                    mercadoPago.getAuthorizedPayment(notification.paymentId());
+            if (authorized == null || authorized.paymentId() == null || authorized.paymentId().isBlank()) {
+                log.warn("Authorized payment notification without a payment id: {}",
+                        notification.paymentId());
+                return null;
+            }
+            log.info("Authorized payment {} resolved to payment {}",
+                    notification.paymentId(), authorized.paymentId());
+            return new NotificationPayment(
+                    authorized.paymentId(),
+                    "payment",
+                    notification.requestId(),
+                    notification.payload());
+        } catch (PaymentProcessingException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            throw new PaymentProcessingException(
+                    "No fue posible consultar el pago autorizado en Mercado Pago.", ex);
+        }
     }
 }

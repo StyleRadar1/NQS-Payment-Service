@@ -4,6 +4,7 @@ import edu.dosw.styleradar.payments.application.port.out.MercadoPagoPort;
 import edu.dosw.styleradar.payments.domain.exception.PaymentProcessingException;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.CancelPreapprovalRequest;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PaymentResponse;
+import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.AuthorizedPaymentResponse;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PreapprovalRequest;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PreapprovalResponse;
 import feign.FeignException;
@@ -69,6 +70,31 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
         } catch (FeignException ex) {
             throw new PaymentProcessingException(
                     "No fue posible consultar el estado del pago en Mercado Pago.", ex);
+        }
+    }
+
+    @Override
+    public AuthorizedPayment getAuthorizedPayment(String authorizedPaymentId) {
+        validateConfiguration();
+        try {
+            AuthorizedPaymentResponse response = feignClient.getAuthorizedPayment(authorization(), authorizedPaymentId);
+            if (response == null || response.payment() == null || response.payment().id() == null) {
+                return null;
+            }
+            return new AuthorizedPayment(
+                    String.valueOf(response.id()),
+                    response.status(),
+                    response.externalReference(),
+                    response.preapprovalId(),
+                    String.valueOf(response.payment().id()),
+                    response.transactionAmount(),
+                    response.currencyId());
+        } catch (FeignException.NotFound ex) {
+            log.warn("Mercado Pago did not find authorized payment {}", authorizedPaymentId);
+            return null;
+        } catch (FeignException ex) {
+            throw new PaymentProcessingException(
+                    "No fue posible consultar el pago autorizado en Mercado Pago.", ex);
         }
     }
 

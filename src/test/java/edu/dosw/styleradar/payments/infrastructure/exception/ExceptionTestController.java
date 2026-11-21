@@ -9,6 +9,8 @@ import edu.dosw.styleradar.payments.domain.exception.SubscriptionNotFoundExcepti
 import edu.dosw.styleradar.payments.domain.model.PaymentStatus;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +35,11 @@ public class ExceptionTestController {
     @GetMapping("/test/404")
     void notFound() {
         throw new SubscriptionNotFoundException();
+    }
+
+    @GetMapping("/test/no-resource")
+    void noResource() throws NoResourceFoundException {
+        throw new NoResourceFoundException(HttpMethod.GET, "/test/no-resource");
     }
 
     @GetMapping("/test/409")

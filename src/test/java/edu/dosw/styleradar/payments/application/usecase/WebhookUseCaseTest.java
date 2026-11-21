@@ -95,6 +95,32 @@ class WebhookUseCaseTest {
     }
 
     @Test
+    void resuelveAuthorizedPaymentRecurrenteYActivaSuscripcion() {
+        lockLibre();
+        when(mercadoPago.getAuthorizedPayment("INV-1")).thenReturn(
+                new MercadoPagoPort.AuthorizedPayment("INV-1", "processed", "SUS-100",
+                        "PRE-1", "MP-1", new BigDecimal("14900.00"), "COP"));
+        when(webhookLogPort.exists("MP-1")).thenReturn(false);
+        PaymentOrder pending = TestFixtures.conIdOrder(TestFixtures.pending(100L, "14900"), 10L);
+        when(paymentOrderRepository.findByExternalPaymentId("MP-1")).thenReturn(Optional.of(pending));
+        when(mercadoPago.getPayment("MP-1")).thenReturn(payment("approved", "SUS-100", "PRE-1"));
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+        Subscription activeda = TestFixtures.activeUser("USER-1",
+                TestFixtures.HOY, TestFixtures.HOY.plusMonths(1));
+        when(activetionService.activate(any(), any(), any())).thenReturn(activeda);
+        when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(activeda));
+
+        useCase.process(new NotificationPayment("INV-1", "subscription_authorized_payment",
+                "req-1", Map.of("type", "subscription_authorized_payment")), "corr");
+
+        verify(mercadoPago).getAuthorizedPayment("INV-1");
+        verify(mercadoPago).getPayment("MP-1");
+        verify(activetionService).activate(any(), any(), any());
+        verify(webhookLogPort).register(eq("MP-1"), anyMap(), eq("PROCESSED"));
+        verify(idempotencyPort).release("lock:payment_MP-1");
+    }
+
+    @Test
     void respetaElBloqueoDeIdempotencia() {
         when(idempotencyPort.tryLock(eq("lock:payment_MP-1"), any(Duration.class)))
                 .thenReturn(false);

@@ -34,6 +34,11 @@ public class MockMercadoPagoAdapter implements MercadoPagoPort {
     }
 
     @Override
+    public AuthorizedPayment getAuthorizedPayment(String authorizedPaymentId) {
+        return null;
+    }
+
+    @Override
     public void cancelPreapproval(String preapprovalId) {
         log.info("Mock Mercado Pago: preapproval {} cancelled", preapprovalId);
     }
