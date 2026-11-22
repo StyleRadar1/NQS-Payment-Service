@@ -40,7 +40,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "ADMIN_STYLERADAR")
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("STYLERADAR_ADMIN", "ADMIN_STYLERADAR", "ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, exception) ->

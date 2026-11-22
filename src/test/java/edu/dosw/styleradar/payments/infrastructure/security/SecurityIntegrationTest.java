@@ -46,6 +46,10 @@ class SecurityIntegrationTest {
                         .header("X-User-Id", "ADMIN-2")
                         .header("X-User-Role", "[ADMIN_STYLERADAR]"))
                 .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/admin/payments")
+                        .header("X-User-Id", "ADMIN-3")
+                        .header("X-User-Role", "[STYLERADAR_ADMIN]"))
+                .andExpect(status().isOk());
     }
 
     @Test

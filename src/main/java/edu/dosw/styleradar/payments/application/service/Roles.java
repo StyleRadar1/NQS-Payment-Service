@@ -12,7 +12,10 @@ public final class Roles {
             return false;
         }
         String normalized = role.trim().toUpperCase(Locale.ROOT);
-        return normalized.equals("ADMIN")
+        return normalized.equals("STYLERADAR_ADMIN")
+                || normalized.equals("ROLE_STYLERADAR_ADMIN")
+                // Compatibilidad temporal con tokens emitidos antes del cambio oficial de roles.
+                || normalized.equals("ADMIN")
                 || normalized.equals("ROLE_ADMIN")
                 || normalized.equals("ADMIN_STYLERADAR")
                 || normalized.equals("ROLE_ADMIN_STYLERADAR");

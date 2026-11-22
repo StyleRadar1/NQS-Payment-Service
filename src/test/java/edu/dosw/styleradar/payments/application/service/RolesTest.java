@@ -11,6 +11,8 @@ class RolesTest {
         assertThat(Roles.isAdmin("ADMIN")).isTrue();
         assertThat(Roles.isAdmin("admin")).isTrue();
         assertThat(Roles.isAdmin("ROLE_ADMIN")).isTrue();
+        assertThat(Roles.isAdmin("STYLERADAR_ADMIN")).isTrue();
+        assertThat(Roles.isAdmin("ROLE_STYLERADAR_ADMIN")).isTrue();
         assertThat(Roles.isAdmin("ADMIN_STYLERADAR")).isTrue();
         assertThat(Roles.isAdmin("ROLE_ADMIN_STYLERADAR")).isTrue();
     }
