@@ -46,6 +46,7 @@ class AdminPaymentUseCaseTest {
         assertThat(payments.get(0).status()).isEqualTo(PaymentStatus.APPROVED);
         assertThat(payments.get(0).planName()).isEqualTo("Radar+");
         assertThat(payments.get(0).subscriberId()).isEqualTo("USER-1");
+        assertThat(payments.get(0).subscriberType()).isEqualTo(edu.dosw.styleradar.payments.domain.model.SubscriberType.USER);
         verify(paymentOrderRepository).list(null);
     }
 
@@ -61,6 +62,7 @@ class AdminPaymentUseCaseTest {
 
         assertThat(response.planName()).isEqualTo("Radar+");
         assertThat(response.subscriberId()).isEqualTo("USER-1");
+        assertThat(response.subscriberType()).isEqualTo(edu.dosw.styleradar.payments.domain.model.SubscriberType.USER);
         assertThatThrownBy(() -> new AdminPaymentUseCase(paymentOrderRepository, subscriptionRepository, planRepository).get(99L))
                 .isInstanceOf(PaymentOrderNotFoundException.class);
     }

@@ -70,6 +70,7 @@ class PaymentUseCaseTest {
         assertThat(history).hasSize(1);
         assertThat(history.get(0).id()).isEqualTo(1L);
         assertThat(history.get(0).subscriberId()).isEqualTo("USER-1");
+        assertThat(history.get(0).subscriberType()).isEqualTo(edu.dosw.styleradar.payments.domain.model.SubscriberType.USER);
         assertThat(history.get(0).planId()).isEqualTo(2L);
         assertThat(history.get(0).planName()).isEqualTo("Radar+");
         assertThat(history.get(0).status()).isEqualTo(PaymentStatus.APPROVED);
