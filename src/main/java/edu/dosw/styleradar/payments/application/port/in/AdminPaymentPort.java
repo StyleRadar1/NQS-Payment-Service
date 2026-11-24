@@ -8,4 +8,6 @@ import java.util.List;
 public interface AdminPaymentPort {
 
     List<PaymentResponse> list(PaymentStatus status);
+
+    PaymentResponse get(Long id);
 }

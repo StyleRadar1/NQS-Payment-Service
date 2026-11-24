@@ -5,6 +5,7 @@ import edu.dosw.styleradar.payments.application.dto.response.RetryPaymentRespons
 import edu.dosw.styleradar.payments.application.port.in.PaymentPort;
 import edu.dosw.styleradar.payments.application.port.out.MercadoPagoPort;
 import edu.dosw.styleradar.payments.application.port.out.PaymentOrderRepositoryPort;
+import edu.dosw.styleradar.payments.application.port.out.PlanRepositoryPort;
 import edu.dosw.styleradar.payments.application.port.out.SubscriptionRepositoryPort;
 import edu.dosw.styleradar.payments.application.service.EmailValidator;
 import edu.dosw.styleradar.payments.application.service.Roles;
@@ -17,6 +18,7 @@ import edu.dosw.styleradar.payments.domain.exception.SubscriptionNotFoundExcepti
 import edu.dosw.styleradar.payments.domain.exception.UnauthorizedException;
 import edu.dosw.styleradar.payments.domain.model.PaymentOrder;
 import edu.dosw.styleradar.payments.domain.model.PaymentStatus;
+import edu.dosw.styleradar.payments.domain.model.Plan;
 import edu.dosw.styleradar.payments.domain.model.Subscription;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,17 +35,20 @@ public class PaymentUseCase implements PaymentPort {
 
     private final PaymentOrderRepositoryPort paymentOrderRepository;
     private final SubscriptionRepositoryPort subscriptionRepository;
+    private final PlanRepositoryPort planRepository;
     private final MercadoPagoPort mercadoPago;
     private final Clock clock;
     private final String backUrl;
 
     public PaymentUseCase(PaymentOrderRepositoryPort paymentOrderRepository,
                           SubscriptionRepositoryPort subscriptionRepository,
+                          PlanRepositoryPort planRepository,
                           MercadoPagoPort mercadoPago,
                           Clock clock,
                           @Value("${mercadopago.back-url}") String backUrl) {
         this.paymentOrderRepository = paymentOrderRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.planRepository = planRepository;
         this.mercadoPago = mercadoPago;
         this.clock = clock;
         this.backUrl = backUrl;
@@ -56,7 +61,7 @@ public class PaymentUseCase implements PaymentPort {
             throw new UnauthorizedException(Messages.SESSION_REQUIRED);
         }
         return paymentOrderRepository.findBySubscriber(subscriberId).stream()
-                .map(PaymentResponse::from)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -112,6 +117,15 @@ public class PaymentUseCase implements PaymentPort {
                 PaymentStatus.PENDING,
                 preapproval.initPoint(),
                 "Nuevo intento de pago generado. Continúa en Mercado Pago.");
+    }
+
+    private PaymentResponse toResponse(PaymentOrder order) {
+        return subscriptionRepository.findById(order.getSubscriptionId())
+                .map(subscription -> PaymentResponse.from(
+                        order,
+                        subscription,
+                        planRepository.findById(subscription.getPlanId()).orElse(null)))
+                .orElseGet(() -> PaymentResponse.from(order));
     }
 
     private void cancelPreviousPreapproval(String previousPreapproval, String newPreapproval) {

@@ -5,6 +5,7 @@ import edu.dosw.styleradar.payments.application.dto.response.PaymentResponse;
 import edu.dosw.styleradar.payments.application.dto.response.RetryPaymentResponse;
 import edu.dosw.styleradar.payments.application.port.out.MercadoPagoPort;
 import edu.dosw.styleradar.payments.application.port.out.PaymentOrderRepositoryPort;
+import edu.dosw.styleradar.payments.application.port.out.PlanRepositoryPort;
 import edu.dosw.styleradar.payments.application.port.out.SubscriptionRepositoryPort;
 import edu.dosw.styleradar.payments.domain.exception.Messages;
 import edu.dosw.styleradar.payments.domain.exception.UnauthorizedException;
@@ -44,13 +45,15 @@ class PaymentUseCaseTest {
     @Mock
     private SubscriptionRepositoryPort subscriptionRepository;
     @Mock
+    private PlanRepositoryPort planRepository;
+    @Mock
     private MercadoPagoPort mercadoPago;
 
     private PaymentUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new PaymentUseCase(paymentOrderRepository, subscriptionRepository, mercadoPago,
+        useCase = new PaymentUseCase(paymentOrderRepository, subscriptionRepository, planRepository, mercadoPago,
                 TestFixtures.CLOCK, "https://app/back");
     }
 
@@ -58,11 +61,17 @@ class PaymentUseCaseTest {
     void historyMapeaPaymentsYExigeIdentidad() {
         PaymentOrder order = TestFixtures.conIdOrder(TestFixtures.aprobada(100L, "14900"), 1L);
         when(paymentOrderRepository.findBySubscriber("USER-1")).thenReturn(List.of(order));
+        when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(
+                TestFixtures.activeUser("USER-1", TestFixtures.HOY.minusDays(5), TestFixtures.HOY.plusDays(25))));
+        when(planRepository.findById(2L)).thenReturn(Optional.of(TestFixtures.planRadarPlus()));
 
         List<PaymentResponse> history = useCase.history("USER-1");
 
         assertThat(history).hasSize(1);
         assertThat(history.get(0).id()).isEqualTo(1L);
+        assertThat(history.get(0).subscriberId()).isEqualTo("USER-1");
+        assertThat(history.get(0).planId()).isEqualTo(2L);
+        assertThat(history.get(0).planName()).isEqualTo("Radar+");
         assertThat(history.get(0).status()).isEqualTo(PaymentStatus.APPROVED);
         assertThatThrownBy(() -> useCase.history(" "))
                 .isInstanceOf(UnauthorizedException.class);
