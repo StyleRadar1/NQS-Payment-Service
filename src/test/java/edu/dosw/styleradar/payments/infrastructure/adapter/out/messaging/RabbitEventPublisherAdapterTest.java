@@ -2,6 +2,7 @@ package edu.dosw.styleradar.payments.infrastructure.adapter.out.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.dosw.styleradar.payments.domain.event.PaymentConfirmedEvent;
+import edu.dosw.styleradar.payments.domain.event.SubscriptionPlanUpdatedEvent;
 import edu.dosw.styleradar.payments.domain.event.SubscriptionSuspendedEvent;
 import edu.dosw.styleradar.payments.domain.exception.PaymentProcessingException;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,6 +83,21 @@ class RabbitEventPublisherAdapterTest {
 
         verify(rabbitTemplate).convertAndSend(
                 eq("styleradar.exchange"), eq("styleradar.pagos.suscripcion.suspendida"),
+                anyString(), any(MessagePostProcessor.class));
+    }
+
+    @Test
+    void publishesSubscriptionPlanUpdated() {
+        SubscriptionPlanUpdatedEvent event = SubscriptionPlanUpdatedEvent.create(
+                edu.dosw.styleradar.payments.TestFixtures.activeUser(
+                        "USER-1", edu.dosw.styleradar.payments.TestFixtures.HOY,
+                        edu.dosw.styleradar.payments.TestFixtures.HOY.plusDays(30)),
+                null, "PLAN_RADAR_PLUS", "corr-plan");
+
+        adapter.publishSubscriptionPlanUpdated(event);
+
+        verify(rabbitTemplate).convertAndSend(
+                eq("styleradar.exchange"), eq("styleradar.pagos.suscripcion.plan.actualizado"),
                 anyString(), any(MessagePostProcessor.class));
     }
 
