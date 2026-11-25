@@ -6,10 +6,13 @@ import edu.dosw.styleradar.payments.domain.model.Amount;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PaymentResponse;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.payment.dto.PreapprovalResponse;
 import feign.FeignException;
+import feign.Request;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -114,6 +117,20 @@ class MercadoPagoAdapterTest {
         assertThatThrownBy(() -> adapter.getPayment("MP-1"))
                 .isInstanceOf(PaymentProcessingException.class)
                 .hasMessageContaining("consultar el estado");
+    }
+
+    @Test
+    void consideraCanceladaUnaPreapprovalQueYaNoExiste() {
+        MercadoPagoAdapter adapter = new MercadoPagoAdapter(feign, "TEST-123");
+        Request request = Request.create(Request.HttpMethod.PUT, "/preapproval/PRE-404",
+                Map.of(), null, StandardCharsets.UTF_8, null);
+        FeignException notFound = new FeignException.NotFound("not found", request, null, Map.of());
+        when(feign.cancelPreapproval(anyString(), eq("PRE-404"), any()))
+                .thenThrow(notFound);
+
+        adapter.cancelPreapproval("PRE-404");
+
+        verify(feign).cancelPreapproval(eq("Bearer TEST-123"), eq("PRE-404"), any());
     }
 
     @Test
