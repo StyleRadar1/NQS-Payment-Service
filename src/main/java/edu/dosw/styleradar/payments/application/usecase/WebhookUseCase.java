@@ -11,6 +11,7 @@ import edu.dosw.styleradar.payments.application.port.out.WebhookLogPort;
 import edu.dosw.styleradar.payments.application.service.PaymentStatusMapper;
 import edu.dosw.styleradar.payments.application.service.SubscriptionActivationService;
 import edu.dosw.styleradar.payments.domain.event.PaymentConfirmedEvent;
+import edu.dosw.styleradar.payments.domain.event.SubscriptionPlanUpdatedEvent;
 import edu.dosw.styleradar.payments.domain.exception.IdempotencyException;
 import edu.dosw.styleradar.payments.domain.exception.InvalidRequestException;
 import edu.dosw.styleradar.payments.domain.exception.PaymentProcessingException;
@@ -19,6 +20,7 @@ import edu.dosw.styleradar.payments.domain.model.Amount;
 import edu.dosw.styleradar.payments.domain.model.PaymentOrder;
 import edu.dosw.styleradar.payments.domain.model.PaymentStatus;
 import edu.dosw.styleradar.payments.domain.model.Subscription;
+import edu.dosw.styleradar.payments.domain.model.SubscriptionStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -207,6 +209,7 @@ public class WebhookUseCase implements WebhookPort {
     private void activateSubscription(PaymentOrder order, String correlationId) {
         Subscription subscription = subscriptionRepository.findById(order.getSubscriptionId())
                 .orElseThrow(SubscriptionNotFoundException::new);
+        SubscriptionStatus previousStatus = subscription.getStatus();
         Subscription activated = activationService.activate(subscription, order, LocalDate.now(clock));
         eventPublisher.publishPaymentConfirmed(PaymentConfirmedEvent.create(
                 new PaymentConfirmedEvent.Data(
@@ -218,8 +221,17 @@ public class WebhookUseCase implements WebhookPort {
                         activated.getPlanId(),
                         activated.getTaxId(),
                         activated.getStoreId(),
-                        activated.getStatus().legacyValue()),
+                        "APPROVED",
+                        activated.getStatus().legacyValue(),
+                        order.getAmount().value(),
+                        order.getAmount().currency()),
                 correlationId));
+        if (previousStatus != SubscriptionStatus.ACTIVE) {
+            String previousPlan = previousStatus == SubscriptionStatus.SUSPENDED
+                    ? SubscriptionPlanUpdatedEvent.SUSPENDED : null;
+            eventPublisher.publishSubscriptionPlanUpdated(SubscriptionPlanUpdatedEvent.create(
+                    activated, previousPlan, SubscriptionPlanUpdatedEvent.planCode(activated), correlationId));
+        }
     }
 
     private boolean isPaymentNotification(String type) {

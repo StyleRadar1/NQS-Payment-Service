@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.dosw.styleradar.payments.application.port.out.EventPublisherPort;
 import edu.dosw.styleradar.payments.domain.event.PaymentConfirmedEvent;
+import edu.dosw.styleradar.payments.domain.event.SubscriptionPlanUpdatedEvent;
 import edu.dosw.styleradar.payments.domain.event.SubscriptionSuspendedEvent;
 import edu.dosw.styleradar.payments.domain.exception.PaymentProcessingException;
 import edu.dosw.styleradar.payments.infrastructure.adapter.out.persistence.entity.OutboxEventEntity;
@@ -32,15 +33,18 @@ public class OutboxEventPublisherAdapter implements EventPublisherPort {
     private final ObjectMapper objectMapper;
     private final String paymentConfirmedKey;
     private final String subscriptionSuspendedKey;
+    private final String subscriptionPlanUpdatedKey;
 
     public OutboxEventPublisherAdapter(OutboxEventJpaRepository outboxRepository,
                                        ObjectMapper objectMapper,
                                        @Value("${styleradar.rabbit.payment-confirmed-key}") String paymentConfirmedKey,
-                                       @Value("${styleradar.rabbit.subscription-suspended-key}") String subscriptionSuspendedKey) {
+                                       @Value("${styleradar.rabbit.subscription-suspended-key}") String subscriptionSuspendedKey,
+                                       @Value("${styleradar.rabbit.subscription-plan-updated-key}") String subscriptionPlanUpdatedKey) {
         this.outboxRepository = outboxRepository;
         this.objectMapper = objectMapper;
         this.paymentConfirmedKey = paymentConfirmedKey;
         this.subscriptionSuspendedKey = subscriptionSuspendedKey;
+        this.subscriptionPlanUpdatedKey = subscriptionPlanUpdatedKey;
     }
 
     @Override
@@ -51,6 +55,11 @@ public class OutboxEventPublisherAdapter implements EventPublisherPort {
     @Override
     public void publishSubscriptionSuspended(SubscriptionSuspendedEvent event) {
         save(event, subscriptionSuspendedKey);
+    }
+
+    @Override
+    public void publishSubscriptionPlanUpdated(SubscriptionPlanUpdatedEvent event) {
+        save(event, subscriptionPlanUpdatedKey);
     }
 
     private void save(Object event, String routingKey) {

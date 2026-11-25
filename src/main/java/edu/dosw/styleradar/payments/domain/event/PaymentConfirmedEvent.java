@@ -2,6 +2,7 @@ package edu.dosw.styleradar.payments.domain.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -27,7 +28,10 @@ public record PaymentConfirmedEvent(
             @JsonProperty("planId") Long planId,
             @JsonProperty("nit") String nit,
             @JsonProperty("almacenId") java.util.UUID storeId,
-            @JsonProperty("estado") String status) {
+            @JsonProperty("estado") String status,
+            @JsonProperty("estadoSuscripcion") String subscriptionStatus,
+            @JsonProperty("monto") BigDecimal amount,
+            @JsonProperty("moneda") String currency) {
     }
 
     public static Long userIdFrom(String subscriberId) {

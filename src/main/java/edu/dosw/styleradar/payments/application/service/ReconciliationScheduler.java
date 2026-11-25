@@ -5,9 +5,11 @@ import edu.dosw.styleradar.payments.application.port.out.MercadoPagoPort;
 import edu.dosw.styleradar.payments.application.port.out.PaymentOrderRepositoryPort;
 import edu.dosw.styleradar.payments.application.port.out.SubscriptionRepositoryPort;
 import edu.dosw.styleradar.payments.domain.event.PaymentConfirmedEvent;
+import edu.dosw.styleradar.payments.domain.event.SubscriptionPlanUpdatedEvent;
 import edu.dosw.styleradar.payments.domain.model.PaymentStatus;
 import edu.dosw.styleradar.payments.domain.model.PaymentOrder;
 import edu.dosw.styleradar.payments.domain.model.Subscription;
+import edu.dosw.styleradar.payments.domain.model.SubscriptionStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -83,6 +85,7 @@ public class ReconciliationScheduler {
         Subscription subscription = subscriptionRepository.findById(order.getSubscriptionId())
                 .orElseThrow(() -> new IllegalStateException(
                         "Subscription not found for order " + order.getId()));
+        SubscriptionStatus previousStatus = subscription.getStatus();
         Subscription activeda = activetionService.activate(subscription, order, LocalDate.now(clock));
         eventPublisher.publishPaymentConfirmed(PaymentConfirmedEvent.create(
                 new PaymentConfirmedEvent.Data(
@@ -94,7 +97,16 @@ public class ReconciliationScheduler {
                         activeda.getPlanId(),
                         activeda.getTaxId(),
                         activeda.getStoreId(),
-                        activeda.getStatus().legacyValue()),
+                        "APPROVED",
+                        activeda.getStatus().legacyValue(),
+                        order.getAmount().value(),
+                        order.getAmount().currency()),
                 null));
+        if (previousStatus != SubscriptionStatus.ACTIVE) {
+            String previousPlan = previousStatus == SubscriptionStatus.SUSPENDED
+                    ? SubscriptionPlanUpdatedEvent.SUSPENDED : null;
+            eventPublisher.publishSubscriptionPlanUpdated(SubscriptionPlanUpdatedEvent.create(
+                    activeda, previousPlan, SubscriptionPlanUpdatedEvent.planCode(activeda), null));
+        }
     }
 }
