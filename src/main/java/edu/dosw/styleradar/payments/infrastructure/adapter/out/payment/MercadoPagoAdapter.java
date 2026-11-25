@@ -67,10 +67,22 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
         } catch (FeignException.NotFound ex) {
             log.warn("Mercado Pago did not find payment {}", paymentId);
             return null;
-        } catch (FeignException ex) {
+                } catch (FeignException ex) {
             throw new PaymentProcessingException(
                     "No fue posible consultar el estado del pago en Mercado Pago.", ex);
         }
+    }
+
+    private boolean yaEstaCancelada(FeignException ex) {
+        if (ex.status() == 404) {
+            return true;
+        }
+        if (ex.status() != 400) {
+            return false;
+        }
+        String body = ex.contentUTF8() == null ? "" : ex.contentUTF8().toLowerCase();
+        return body.contains("cancel") || body.contains("not found")
+                || body.contains("no existe");
     }
 
     @Override
@@ -105,6 +117,11 @@ public class MercadoPagoAdapter implements MercadoPagoPort {
             feignClient.cancelPreapproval(
                     authorization(), preapprovalId, new CancelPreapprovalRequest("cancelled"));
         } catch (FeignException ex) {
+            if (yaEstaCancelada(ex)) {
+                log.info("Mercado Pago ya no tiene activa la preapproval {}; "
+                        + "se considera cancelada localmente", preapprovalId);
+                return;
+            }
             throw new PaymentProcessingException(
                     "No fue posible desactivar la renovación. Inténtalo nuevamente.", ex);
         }
