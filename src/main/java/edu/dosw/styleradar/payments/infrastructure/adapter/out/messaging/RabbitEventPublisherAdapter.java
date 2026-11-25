@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.dosw.styleradar.payments.application.port.out.EventPublisherPort;
 import edu.dosw.styleradar.payments.domain.event.PaymentConfirmedEvent;
+import edu.dosw.styleradar.payments.domain.event.SubscriptionPlanUpdatedEvent;
 import edu.dosw.styleradar.payments.domain.event.SubscriptionSuspendedEvent;
 import edu.dosw.styleradar.payments.domain.exception.PaymentProcessingException;
 import lombok.extern.slf4j.Slf4j;
@@ -30,17 +31,20 @@ public class RabbitEventPublisherAdapter implements EventPublisherPort {
     private final String exchange;
     private final String paymentConfirmedKey;
     private final String subscriptionSuspendedKey;
+    private final String subscriptionPlanUpdatedKey;
 
     public RabbitEventPublisherAdapter(RabbitTemplate rabbitTemplate,
                                        ObjectMapper objectMapper,
                                        @Value("${styleradar.rabbit.exchange}") String exchange,
                                        @Value("${styleradar.rabbit.payment-confirmed-key}") String paymentConfirmedKey,
-                                       @Value("${styleradar.rabbit.subscription-suspended-key}") String subscriptionSuspendedKey) {
+                                       @Value("${styleradar.rabbit.subscription-suspended-key}") String subscriptionSuspendedKey,
+                                       @Value("${styleradar.rabbit.subscription-plan-updated-key}") String subscriptionPlanUpdatedKey) {
         this.rabbitTemplate = rabbitTemplate;
         this.objectMapper = objectMapper;
         this.exchange = exchange;
         this.paymentConfirmedKey = paymentConfirmedKey;
         this.subscriptionSuspendedKey = subscriptionSuspendedKey;
+        this.subscriptionPlanUpdatedKey = subscriptionPlanUpdatedKey;
     }
 
     @Override
@@ -52,6 +56,12 @@ public class RabbitEventPublisherAdapter implements EventPublisherPort {
     @Override
     public void publishSubscriptionSuspended(SubscriptionSuspendedEvent event) {
         publish(subscriptionSuspendedKey, event, event.eventId().toString(), event.eventType(),
+                event.timestamp());
+    }
+
+    @Override
+    public void publishSubscriptionPlanUpdated(SubscriptionPlanUpdatedEvent event) {
+        publish(subscriptionPlanUpdatedKey, event, event.eventId().toString(), event.eventType(),
                 event.timestamp());
     }
 

@@ -86,6 +86,7 @@ styleradar:
     exchange: ${RABBIT_EXCHANGE:styleradar.exchange}
     payment-confirmed-key: styleradar.pagos.pago.confirmado
     subscription-suspended-key: styleradar.pagos.suscripcion.suspendida
+    subscription-plan-updated-key: styleradar.pagos.suscripcion.plan.actualizado
   scheduling:
     enabled: ${SCHEDULING_ENABLED:true}
 

@@ -2,6 +2,7 @@ package edu.dosw.styleradar.payments.application.service;
 
 import edu.dosw.styleradar.payments.application.port.out.EventPublisherPort;
 import edu.dosw.styleradar.payments.application.port.out.SubscriptionRepositoryPort;
+import edu.dosw.styleradar.payments.domain.event.SubscriptionPlanUpdatedEvent;
 import edu.dosw.styleradar.payments.domain.event.SubscriptionSuspendedEvent;
 import edu.dosw.styleradar.payments.domain.model.Subscription;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,11 @@ public class SubscriptionScheduler {
                                 guardada.getStoreId(),
                                 guardada.getEndDate(),
                                 "FALTA_DE_PAGO"),
+                        null));
+                eventPublisher.publishSubscriptionPlanUpdated(SubscriptionPlanUpdatedEvent.create(
+                        guardada,
+                        SubscriptionPlanUpdatedEvent.planCode(guardada),
+                        SubscriptionPlanUpdatedEvent.SUSPENDED,
                         null));
                 suspendeds++;
             } catch (RuntimeException ex) {

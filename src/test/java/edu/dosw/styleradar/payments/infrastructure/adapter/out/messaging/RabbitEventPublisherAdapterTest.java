@@ -38,14 +38,16 @@ class RabbitEventPublisherAdapterTest {
         ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
         adapter = new RabbitEventPublisherAdapter(rabbitTemplate, objectMapper,
                 "styleradar.exchange", "styleradar.pagos.pago.confirmado",
-                "styleradar.pagos.suscripcion.suspendida");
+                "styleradar.pagos.suscripcion.suspendida",
+                "styleradar.pagos.suscripcion.plan.actualizado");
     }
 
     @Test
     void publishesPaymentConfirmedWithJsonProperties() {
         PaymentConfirmedEvent event = PaymentConfirmedEvent.create(
                 new PaymentConfirmedEvent.Data(1L, 2L, "USER-1", 1L, "USUARIO",
-                        2L, null, null, "ACTIVA"), "corr-1");
+                        2L, null, null, "APPROVED", "ACTIVA",
+                        new java.math.BigDecimal("14900"), "COP"), "corr-1");
 
         adapter.publishPaymentConfirmed(event);
 
@@ -59,6 +61,9 @@ class RabbitEventPublisherAdapterTest {
         assertThat(json.getValue()).contains("\"eventType\":\"styleradar.pagos.pago.confirmado\"");
         assertThat(json.getValue()).contains("\"suscriptorId\":\"USER-1\"");
         assertThat(json.getValue()).contains("\"tipoSuscriptor\":\"USUARIO\"");
+        assertThat(json.getValue()).contains("\"estado\":\"APPROVED\"");
+        assertThat(json.getValue()).contains("\"monto\":14900");
+        assertThat(json.getValue()).contains("\"moneda\":\"COP\"");
 
         Message message = processor.getValue().postProcessMessage(new Message(new byte[0]));
         assertThat(message.getMessageProperties().getContentType()).isEqualTo("application/json");
@@ -86,7 +91,8 @@ class RabbitEventPublisherAdapterTest {
                 .convertAndSend(anyString(), anyString(), anyString(), any(MessagePostProcessor.class));
         PaymentConfirmedEvent event = PaymentConfirmedEvent.create(
                 new PaymentConfirmedEvent.Data(1L, 2L, "USER-1", 1L, "USUARIO",
-                        2L, null, null, "ACTIVA"), null);
+                        2L, null, null, "APPROVED", "ACTIVA",
+                        new java.math.BigDecimal("14900"), "COP"), null);
 
         assertThatThrownBy(() -> adapter.publishPaymentConfirmed(event))
                 .isInstanceOf(PaymentProcessingException.class)

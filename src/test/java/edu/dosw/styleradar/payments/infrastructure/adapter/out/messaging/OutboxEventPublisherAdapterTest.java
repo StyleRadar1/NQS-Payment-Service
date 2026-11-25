@@ -24,10 +24,12 @@ class OutboxEventPublisherAdapterTest {
         ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
         OutboxEventPublisherAdapter adapter = new OutboxEventPublisherAdapter(
                 repository, mapper, "styleradar.pagos.pago.confirmado",
-                "styleradar.pagos.suscripcion.suspendida");
+                "styleradar.pagos.suscripcion.suspendida",
+                "styleradar.pagos.suscripcion.plan.actualizado");
         PaymentConfirmedEvent event = PaymentConfirmedEvent.create(
                 new PaymentConfirmedEvent.Data(1L, 2L, "10", 10L, "USUARIO", 2L,
-                        null, null, "ACTIVA"), "corr");
+                        null, null, "APPROVED", "ACTIVA",
+                        new java.math.BigDecimal("14900"), "COP"), "corr");
 
         adapter.publishPaymentConfirmed(event);
 
