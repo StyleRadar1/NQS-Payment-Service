@@ -77,18 +77,18 @@
 
 ## <img src="https://img.shields.io/badge/ÍNDICE-5600EF?style=for-the-badge" height="20" align="absmiddle" /> ÍNDICE DE CONTENIDOS
 
-1. [Nombre del servicio y su bounded context](#1-nombre-del-servicio-y-su-bounded-context)
-2. [Equipo y responsables](#2-equipo-y-responsables)
-3. [Arquitectura hexagonal con su diagrama](#3-arquitectura-hexagonal-con-su-diagrama)
-4. [Endpoints y enlace a Swagger](#4-endpoints-y-enlace-a-swagger)
-5. [Eventos que publica y consume](#5-eventos-que-publica-y-consume)
-6. [Tecnologías y dependencias](#6-tecnologías-y-dependencias)
-7. [Cómo ejecutar local y con Docker](#7-cómo-ejecutar-local-y-con-docker)
-8. [Variables de entorno](#8-variables-de-entorno)
-9. [Pruebas y cobertura](#9-pruebas-y-cobertura)
-10. [CI/CD con el badge del pipeline](#10-cicd-con-el-badge-del-pipeline)
-11. [Ramas y cómo contribuir](#11-ramas-y-cómo-contribuir)
-12. [Enlace a la épica en Jira](#12-enlace-a-la-épica-en-jira)
+1. [Nombre del servicio y su bounded context](docs/secciones/01-nombre-del-servicio-y-bounded-context.md)
+2. [Arquitectura hexagonal con sus diagramas](docs/secciones/02-arquitectura-hexagonal-y-diagramas.md)
+3. [Endpoints y enlace a Swagger](docs/secciones/03-endpoints-y-enlace-a-swagger.md)
+4. [Eventos que publica y consume](docs/secciones/04-eventos-que-publica-y-consume.md)
+5. [Tecnologías y dependencias](docs/secciones/05-tecnologias-y-dependencias.md)
+6. [Cómo ejecutar local y con Docker](docs/secciones/06-como-ejecutar-local-y-docker.md)
+7. [Variables de entorno](docs/secciones/07-variables-de-entorno.md)
+8. [Pruebas y cobertura (≥ 85%)](docs/secciones/08-pruebas-y-cobertura.md)
+9. [CI/CD con el badge del pipeline](docs/secciones/09-cicd-pipeline.md)
+10. [Ramas y cómo contribuir](docs/secciones/10-ramas-y-como-contribuir.md)
+11. [Seguridad, Habeas Data y análisis OWASP Top 10](docs/secciones/11-seguridad-y-owasp.md)
+12. [Equipo, responsables y enlace a la épica en Jira](docs/secciones/12-equipo-responsables-y-epica-jira.md)
 
 ---
 
@@ -107,44 +107,6 @@ Desarrollado y mantenido por el **Squad `NQS: No Queremos Scrum`** para la asign
 | **Frontend Developer** | `Julian Felipe Morales Zambrano` | [@JulianMorales2003](https://github.com/JulianMorales2003) |
 
 </div>
-
----
-
-<a id="3-arquitectura-hexagonal-con-su-diagrama"></a>
-
-## <img src="https://img.shields.io/badge/03-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 3. ARQUITECTURA HEXAGONAL CON SU DIAGRAMA
-
-El microservicio implementa **Arquitectura Hexagonal (Puertos y Adaptadores)** combinada con **Domain-Driven Design (DDD)**. El núcleo de negocio permanece 100% puro y aislado de frameworks, bases de datos o brokers de mensajería.
-
-## 3.1 Diagrama de CLases
-
-![DiagramaClases](/docs/uml/StyleRadar-Pagos-DiagramaClases.png)
-
-## 3.2 Diagrama Entidad-Relación de Base de Datos (PostgreSQL 16)
-
-![Diagrama ER](/docs/uml/StyleRadar-Pagos-DiagramaER.png)
-
-Reglas e índices relevantes:
-
-- `planes.tipo_suscriptor` ∈ `USUARIO`/`ALMACEN`; `precio >= 0`.
-- `suscripciones.estado` ∈ `PENDIENTE`/`ACTIVA`/`SUSPENDIDA`.
-- Índice único parcial `uq_suscripcion_activa_pendiente`: un suscriptor no puede tener dos suscripciones `ACTIVA` o `PENDIENTE` simultáneas.
-- `ordenes_pago.estado` ∈ `PENDIENTE`/`APROBADO`/`RECHAZADO`/`REEMBOLSADO`; `monto_reembolsado <= monto`.
-- `ordenes_pago.id_pago_externo` y `webhooks_log.id_pago_externo` son únicos: segunda barrera de idempotencia.
-
-
-### Estructura Oficial de Paquetes en `src/main/java/`
-
-```text
-domain/        Java puro: Plan, Suscripcion, OrdenPago, Monto, enums, eventos y excepciones
-application/   puertos in/out, DTOs, casos de uso, schedulers y servicios de aplicación
-infrastructure/adapter/in/rest      controladores REST, webhook, health
-infrastructure/adapter/out/persistence  JPA + PostgreSQL/Flyway
-infrastructure/adapter/out/payment      Mercado Pago (Feign) y mock dev/test
-infrastructure/adapter/out/cache        Redis SETNX
-infrastructure/adapter/out/messaging    RabbitMQ publisher
-infrastructure/config                   seguridad, Rabbit, Redis, OpenAPI, reloj
-```
 
 ---
 
