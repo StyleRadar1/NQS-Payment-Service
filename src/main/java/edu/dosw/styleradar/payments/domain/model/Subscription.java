@@ -109,10 +109,10 @@ public final class Subscription {
             return;
         }
         String normalizado = taxId.trim();
-        if (!normalizado.matches("\\d{9}")) {
+        if (!normalizado.matches("\\d{9}(-\\d)?")) {
             throw new IllegalArgumentException("El NIT debe tener exactamente 9 dígitos.");
         }
-        this.taxId = normalizado;
+        this.taxId = normalizado.substring(0, 9);
         this.updatedAt = LocalDateTime.now();
     }
 

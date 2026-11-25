@@ -14,8 +14,8 @@ public record StartSubscriptionRequest(
 
         Long planId,
 
-        @Pattern(regexp = "\\d{9}", message = "El NIT debe tener exactamente 9 dígitos.")
+        @Pattern(regexp = "^\\d{9}(-\\d)?$", message = "El NIT debe tener 9 dÃ­gitos, con o sin dÃ­gito de verificaciÃ³n.")
         String taxId,
 
-        java.util.UUID storeId) {
+        String storeId) {
 }

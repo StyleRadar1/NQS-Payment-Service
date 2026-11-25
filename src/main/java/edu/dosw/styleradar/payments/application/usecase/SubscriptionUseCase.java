@@ -84,14 +84,20 @@ public class SubscriptionUseCase implements SubscriptionPort {
                 .orElseGet(() -> Subscription.pending(subscriberId, type, plan.getId(), LocalDateTime.now(clock)));
 
         if (type == SubscriberType.STORE) {
-            if (request.storeId() == null) {
-                throw new InvalidRequestException(Messages.STORE_ID_REQUIRED);
-            }
-            subscription.assignStoreId(request.storeId());
-            if (request.taxId() == null || !request.taxId().matches("\\d{9}")) {
+            if (request.taxId() == null || !request.taxId().matches("\\d{9}(-\\d)?")) {
                 throw new InvalidRequestException(Messages.TAX_ID_REQUIRED);
             }
             subscription.assignTaxId(request.taxId());
+            // El NIT es el identificador canonico de tienda. storeId se conserva
+            // como dato legado opcional para no romper integraciones anteriores.
+            if (request.storeId() != null && !request.storeId().isBlank()) {
+                try {
+                    subscription.assignStoreId(java.util.UUID.fromString(request.storeId().trim()));
+                } catch (IllegalArgumentException ignored) {
+                    // Un storeId legado (por ejemplo el id de Auth o el NIT) no es UUID.
+                    // La tienda queda identificada por taxId.
+                }
+            }
         }
 
         subscription = subscriptionRepository.save(subscription);
