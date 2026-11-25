@@ -125,7 +125,7 @@ class SubscriptionUseCaseTest {
 
             StartSubscriptionResponse response = useCase.start("STORE-1",
                     new StartSubscriptionRequest(SubscriberType.STORE,
-                            "store@testuser.com", 2L, "900123456", java.util.UUID.fromString("a1111111-1111-1111-1111-111111111111")));
+                            "store@testuser.com", 2L, "900123456", "a1111111-1111-1111-1111-111111111111"));
 
             assertThat(response.message()).contains("activar tu almac");
             ArgumentCaptor<Subscription> guardadas = ArgumentCaptor.forClass(Subscription.class);
@@ -201,17 +201,25 @@ class SubscriptionUseCaseTest {
         }
 
         @Test
-        void exigeStoreIdParaSubscriptionDeStore() {
+        void permiteStoreSinStoreIdYNormalizaNitCompleto() {
             when(planRepository.findPaidPlanByType(SubscriberType.STORE))
                     .thenReturn(Optional.of(TestFixtures.planStore()));
             when(subscriptionRepository.findActiveOrPending("STORE-1")).thenReturn(Optional.empty());
             when(subscriptionRepository.findLatestBySubscriber("STORE-1")).thenReturn(Optional.empty());
+            saveSubscriptionConId();
+            saveOrderConId();
+            when(mercadoPago.createPreapproval(any())).thenReturn(preapproval());
 
-            assertThatThrownBy(() -> useCase.start("STORE-1",
+            edu.dosw.styleradar.payments.application.dto.response.StartSubscriptionResponse response = useCase.start("STORE-1",
                     new StartSubscriptionRequest(SubscriberType.STORE,
-                            "store@testuser.com", null, "900123456", null)))
-                    .isInstanceOf(InvalidRequestException.class)
-                    .hasMessage(Messages.STORE_ID_REQUIRED);
+                            "store@testuser.com", 3L, "900123456-1", null));
+
+            assertThat(response.message()).contains("activar tu almac");
+            org.mockito.ArgumentCaptor<Subscription> guardadas =
+                    org.mockito.ArgumentCaptor.forClass(Subscription.class);
+            verify(subscriptionRepository, org.mockito.Mockito.times(2)).save(guardadas.capture());
+            assertThat(guardadas.getAllValues().get(0).getTaxId()).isEqualTo("900123456");
+            assertThat(guardadas.getAllValues().get(0).getStoreId()).isNull();
         }
 
         @Test

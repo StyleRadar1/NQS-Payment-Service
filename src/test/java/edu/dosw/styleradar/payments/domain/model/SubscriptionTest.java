@@ -60,6 +60,13 @@ class SubscriptionTest {
     }
 
     @Test
+    void normalizaNitConDigitoDeVerificacion() {
+        Subscription subscription = pending();
+        subscription.assignTaxId("900123456-1");
+        assertThat(subscription.getTaxId()).isEqualTo("900123456");
+    }
+
+    @Test
     void asignaNitVacioComoNulo() {
         Subscription subscription = pending();
         subscription.assignTaxId("900123456");
