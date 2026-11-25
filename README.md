@@ -43,20 +43,23 @@
 
   <p align="center">
     <strong><font color="#5600EF">Descubre tu estilo. En tu ciudad.</font></strong><br />
-    <em>Plataforma de moda local con inventario multi-sede geolocalizado en tiempo real y probador virtual para Bogotá.</em>
+    <em>Gestión de pagos asociados a las suscripciones de StyleRadar bajo la pasarela de Mercado Pago.</em>
   </p>
 
   <p align="center">
-    <a href="https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html">
-      <img src="https://img.shields.io/badge/PROD-Active-16A34A?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="PROD Deployment" />
+    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md">
+      <img src="https://img.shields.io/badge/DEV_LOCAL-Active-16A34A?style=for-the-badge&logo=docker&logoColor=white" alt="DEV Local Active" />
     </a>
-    <a href="https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html">
-      <img src="https://img.shields.io/badge/QA-Active-5600EF?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="QA Deployment" />
+    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md">
+      <img src="https://img.shields.io/badge/QA_CLOUD-Active-5600EF?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="QA Cloud Active" />
     </a>
-    <a href="<URL_SONARQUBE>">
+    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md">
+      <img src="https://img.shields.io/badge/PROD_CLOUD-Active-16A34A?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="PROD Cloud Active" />
+    </a>
+    <a href="docs/secciones/09-cicd-pipeline.md">
       <img src="https://img.shields.io/badge/SonarQube-Quality_Gate_Passed-16A34A?style=for-the-badge&logo=sonarqube&logoColor=white" alt="Quality Gate" />
     </a>
-    <a href="target/site/jacoco/index.html">
+    <a href="docs/secciones/08-pruebas-y-cobertura.md">
       <img src="https://img.shields.io/badge/JaCoCo_Coverage-%E2%89%A5_85%25-16A34A?style=for-the-badge&logo=codecov&logoColor=white" alt="Coverage" />
     </a>
     <a href="#6-tecnologías-y-dependencias">
@@ -71,7 +74,6 @@
   </p>
 
 </div>
-
 
 ---
 
@@ -89,61 +91,3 @@
 10. [Ramas y cómo contribuir](docs/secciones/10-ramas-y-como-contribuir.md)
 11. [Seguridad, Habeas Data y análisis OWASP Top 10](docs/secciones/11-seguridad-y-owasp.md)
 12. [Equipo, responsables y enlace a la épica en Jira](docs/secciones/12-equipo-responsables-y-epica-jira.md)
-
----
-
-<a id="11-ramas-y-cómo-contribuir"></a>
-
-## <img src="https://img.shields.io/badge/11-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 11. RAMAS Y CÓMO CONTRIBUIR
-
-El equipo sigue el modelo de trabajo **GitFlow adaptado para microservicios**. La rama `main` se encuentra protegida y solo recibe cambios mediante Pull Requests aprobados.
-
-### Estructura de Ramas Oficial
-
-```text
-main                    <-- Código en producción (Desplegado en Azure PROD)
-└── develop             <-- Rama de integración continua (Staging / QA)
-    ├── feature/SR-<ID>-<descripcion-corta>   <-- Nuevas funcionalidades
-    ├── bugfix/SR-<ID>-<descripcion-corta>    <-- Corrección de defectos
-    └── hotfix/<descripcion-corta>            <-- Parche urgente a main
-```
-
-### Convención de Commits (*Conventional Commits*)
-
-Todo mensaje de commit debe seguir el estándar:
-
-```text
-<tipo>(<alcance>): <descripción imperativa en español> [#SR-RF-XX]
-
-Ejemplos válidos:
-feat(catalogo): agregar filtro de prendas por ocasión y estilo [#SR-RF-13]
-fix(suscripcion): corregir inicio de suscripciones [#SR-RF-67]
-test(dominio): agregar pruebas unitarias para entidad Prenda [#SR-RF-50]
-docs(readme): actualizar variables de entorno y topología de eventos
-```
-
-### Checklist Obligatorio para Pull Requests
-
-- [ ] La rama parte de la versión más reciente de `develop`.
-- [ ] El código compila limpiamente con `mvn clean compile`.
-- [ ] Todas las pruebas unitarias e integración pasan (`mvn verify`).
-- [ ] La cobertura JaCoCo es mayor o igual al 85%.
-- [ ] No se introducen credenciales, contraseñas ni tokens en el código fuente.
-- [ ] El PR tiene asignado al menos 1 revisor del squad antes del merge.
-
----
-
-<a id="12-enlace-a-la-épica-en-jira"></a>
-
-## <img src="https://img.shields.io/badge/12-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 12. ENLACE A LA ÉPICA EN JIRA
-
-El seguimiento de requerimientos, evidencias y artefactos de entrega se centraliza en los siguientes enlaces oficiales:
-
-### Enlaces de Gestión, Repositorios y Evidencias
-
-* **Épica Oficial del Microservicio (Jira):** [https://mail-team-hdkr3g6f.atlassian.net/browse/NQS-5](https://mail-team-hdkr3g6f.atlassian.net/browse/NQS-5)
-* **Tablero Scrum del Squad (Jira):** [https://mail-team-hdkr3g6f.atlassian.net/jira/software/projects/NQS/boards/1?filter=&groupBy=none](https://mail-team-hdkr3g6f.atlassian.net/jira/software/projects/NQS/boards/1?filter=&groupBy=none)
-
-<div align="center">
-  <img src="docs/evidencias/jira-tablero-epica.png" width="90%" alt="Tablero Jira" />
-</div>
