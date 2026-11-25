@@ -2,6 +2,7 @@ package edu.dosw.styleradar.payments.domain.event;
 
 import edu.dosw.styleradar.payments.TestFixtures;
 import edu.dosw.styleradar.payments.domain.model.SubscriberType;
+import edu.dosw.styleradar.payments.domain.model.SubscriptionStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,5 +40,18 @@ class SubscriptionPlanUpdatedEventTest {
         assertThat(SubscriptionPlanUpdatedEvent.planCode(SubscriberType.USER, 2L)).isEqualTo("PLAN_RADAR_PLUS");
         assertThat(SubscriptionPlanUpdatedEvent.planCode(SubscriberType.STORE, 3L)).isEqualTo("PLAN_STORE_MONTHLY");
         assertThat(SubscriptionPlanUpdatedEvent.planCode(SubscriberType.USER, null)).isEqualTo("PLAN_RADAR");
+    }
+
+    @Test
+    void resolvesPreviousPlanForActivation() {
+        var activeUser = TestFixtures.activeUser("10", TestFixtures.HOY, TestFixtures.HOY.plusDays(30));
+        var activeStore = TestFixtures.activeStore("20", "900123456", TestFixtures.HOY, TestFixtures.HOY.plusDays(30));
+
+        assertThat(SubscriptionPlanUpdatedEvent.previousPlanForActivation(activeUser, SubscriptionStatus.PENDING))
+                .isEqualTo("PLAN_RADAR");
+        assertThat(SubscriptionPlanUpdatedEvent.previousPlanForActivation(activeUser, SubscriptionStatus.SUSPENDED))
+                .isEqualTo(SubscriptionPlanUpdatedEvent.SUSPENDED);
+        assertThat(SubscriptionPlanUpdatedEvent.previousPlanForActivation(activeStore, SubscriptionStatus.PENDING))
+                .isNull();
     }
 }
