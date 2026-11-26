@@ -2,7 +2,7 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/12-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 12. EQUIPO, RESPONSABLES Y ENLACE A LA ÉPICA EN JIRA
+## 12. EQUIPO, RESPONSABLES Y ENLACE A LA ÉPICA EN JIRA
 
 ### Equipo y Responsables del Microservicio
 

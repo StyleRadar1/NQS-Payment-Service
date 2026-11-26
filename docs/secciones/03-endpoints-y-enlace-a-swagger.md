@@ -2,8 +2,7 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/03-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 3. ENDPOINTS Y ENLACE A SWAGGER (Corregir)
-
+## 3. ENDPOINTS Y ENLACE A SWAGGER 
 La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encuentran desplegados y clasificados por entorno:
 
 ### Matriz Oficial de Enlaces por Entorno (PROD, QA, LOCAL)
@@ -26,14 +25,14 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 
 | Método | Endpoint | Autorización | Éxito | Errores |
 | :---: | :--- | :--- | :---: | :--- |
-| `POST` | `/api/v1/suscripciones/iniciar` | JWT / `X-User-Id` | `201` | `400`, `403`, `422` |
-| `GET` | `/api/v1/suscripciones/{suscriptorId}` | Titular o `ADMIN_STYLERADAR` | `200` | `401`, `403`, `404` |
-| `POST` | `/api/v1/suscripciones/{suscriptorId}/cancelar` | Titular | `200` | `400`, `403`, `404`, `422` |
-| `GET` | `/api/v1/pagos/historial` | JWT / `X-User-Id` | `200` | `401` |
-| `POST` | `/api/v1/pagos/{ordenId}/reintentar` | Titular | `200` | `400`, `403`, `404`, `422` |
-| `POST` | `/api/v1/pagos/{ordenId}/reembolsar` | `ADMIN_STYLERADAR` | `200` | `400`, `403`, `404`, `422` |
-| `GET` | `/api/v1/admin/pagos?estado=` | `ADMIN_STYLERADAR` | `200` | `403` |
-| `GET` | `/api/v1/planes` | Autenticado | `200` | `401` |
+| `POST` | `/api/v1/subscriptions/start` | JWT / `X-User-Id` | `202` | `400`, `403`, `422` |
+| `GET` | `/api/v1/subscriptions/{subscriberId}` | Titular o `ADMIN_STYLERADAR` | `200` | `401`, `403`, `404` |
+| `POST` | `/api/v1/subscriptions/{subscriberId}/cancel` | Titular | `200` | `400`, `403`, `404`, `422` |
+| `GET` | `/api/v1/payments/history` | JWT / `X-User-Id` | `200` | `401` |
+| `POST` | `/api/v1/payments/{orderId}/retry` | Titular | `200` | `400`, `403`, `404`, `422` |
+| `GET` | `/api/v1/admin/payments` | `ADMIN_STYLERADAR` | `200` | `403` |
+| `GET` | `/api/v1/admin/payments/{id}` | `ADMIN_STYLERADAR` | `200` | `403`, `404` |
+| `GET` | `/api/v1/plans` | Autenticado | `200` | `401` |
 | `POST` | `/api/v1/webhooks/mercadopago` | HMAC `x-signature` | `200` | `400` |
 | `GET` | `/api/v1/health` | Público | `200` | — |
 | `GET` | `/actuator/health` | Público | `200`/`503` | — |
@@ -42,59 +41,146 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 
 <br>
 
-**Crear suscripción de usuario**
+#### Ejemplo 1: Iniciar pago de tienda (`POST /api/v1/subscriptions/start`)
 
-```http
-POST /api/v1/suscripciones/iniciar
-Authorization: Bearer <JWT>
-Content-Type: application/json
+```bash
+curl -i -X POST "$BASE_URL/api/v1/subscriptions/start" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-User-Id: 3" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscriberType": "STORE",
+    "payerEmail": "test_user_8378736833666739761@testuser.com",
+    "planId": 3,
+    "taxId": "900555777"
+  }'
 ```
+##### Respuesta Exitosa (`202 Accepted`):
 
 ```json
 {
-  "tipoSuscriptor": "USUARIO",
-  "emailPayer": "test_user_117646358391238183361@testuser.com",
-  "planId": 2
+  "subscriptionId": 26,
+  "orderId": 30,
+  "status": "PENDING",
+  "initPoint": "https://www.mercadopago.com.co/subscriptions/checkout?preapproval_id=...",
+  "message": "Continúa a Mercado Pago para activar tu almacén."
+}
+```
+#### Ejemplo 2: Consultar suscripcion (`GET /api/v1/subscriptions/{subscriberId}`)
+
+```bash
+curl -i -X GET "$BASE_URL/api/v1/subscriptions/3" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-User-Id: 3" \
+  -H "Accept: application/json"
+```
+##### Respuesta (`200 OK`):
+
+```json
+{
+  "id": 26,
+  "subscriberId": "3",
+  "subscriberType": "STORE",
+  "plan": {
+    "id": 3,
+    "name": "Store Basic",
+    "subscriberType": "STORE",
+    "price": {
+      "value": 89000.00,
+      "currency": "COP"
+    },
+    "limits": {
+      "max_products": 50
+    },
+    "active": true
+  },
+  "status": "ACTIVE",
+  "startDate": "2026-11-25",
+  "endDate": "2026-12-25",
+  "autoRenewal": false,
+  "access": true,
+  "taxId": "900555777",
+  "storeId": null
+}
+```
+#### Ejemplo 3: Cancelar renovación (`POST /api/v1/subscriptions/{subscriberId}/cancel`)
+
+```bash
+curl -i -X POST "$BASE_URL/api/v1/subscriptions/3/cancel" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-User-Id: 3" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "confirmed": true
+  }'
+```
+##### Respuesta (`200 OK`):
+
+```json
+{
+  "subscriptionId": 26,
+  "autoRenewal": false,
+  "status": "ACTIVE",
+  "endDate": "2026-12-25",
+  "cancellationConfirmed": true,
+  "message": "La renovación de tu suscripción fue cancelada. Mantienes el acceso hasta 2026-12-25."
 }
 ```
 
+#### Ejemplo 4: Reintentar pago rechazado (`POST /api/v1/payments/{orderId}/retry`)
+
+```bash
+curl -i -X POST "$BASE_URL/api/v1/payments/30/retry" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-User-Id: 3" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payerEmail": "test_user_8378736833666739761@testuser.com"
+  }'
+```
+##### Respuesta (`200 OK`):
+
 ```json
 {
-  "suscripcionId": 100,
-  "ordenId": 10,
-  "estado": "PENDIENTE",
-  "initPoint": "https://www.mercadopago.com.co/subscriptions/checkout?preapproval_id=..."
+  "orderId": 31,
+  "status": "PENDING",
+  "initPoint": "[https://www.mercadopago.com.co/subscriptions/checkout?preapproval_id=](https://www.mercadopago.com.co/subscriptions/checkout?preapproval_id=)...",
+  "message": "Nuevo intento de pago generado. Continúa en Mercado Pago."
 }
 ```
 
-**Crear suscripción de almacén**
+#### Ejemplo 5: Error de negocio en GlobalExceptionHandler (`POST /api/v1/subscriptions/start`)
 
-```json
-{
-  "tipoSuscriptor": "ALMACEN",
-  "emailPayer": "test_user_...@testuser.com",
-  "nit": "900123456-7",
-  "almacenId": "a1111111-1111-1111-1111-111111111111"
-}
+```bash
+curl -i -X POST "$BASE_URL/api/v1/subscriptions/start" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-User-Id: 3" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "planId": 3,
+    "subscriberType": "STORE",
+    "taxId": "900555777"
+  }'
 ```
-
-`almacenId` es obligatorio para `ALMACEN`: es el UUID que usa `ms-item-catalogo` para suspender el catálogo.
-
-**Error estándar**
+##### Respuesta (`409 Conflict`):
 
 ```json
 {
-  "timestamp": "2026-11-17T02:15:30.123",
-  "status": 400,
-  "error": "INVALID_STATE",
-  "message": "La suscripción ya está activa. No se requiere reintentar el pago.",
-  "path": "/api/v1/pagos/1/reintentar",
-  "validationErrors": []
+  "type": "about:blank",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "Tu almacén ya tiene una suscripción activa o un pago pendiente.",
+  "instance": "/api/v1/subscriptions/start",
+  "code": "SUBSCRIPTION_ALREADY_EXISTS",
+  "timestamp": "2026-11-25T12:30:00"
 }
 ```
 
 </details>
-
 
 ---
 

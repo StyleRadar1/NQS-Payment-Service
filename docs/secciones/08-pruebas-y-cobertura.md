@@ -2,7 +2,7 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/08-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 8. PRUEBAS Y COBERTURA (≥ 85%)
+## 8. PRUEBAS Y COBERTURA (≥ 85%)
 
 El proyecto exige una cobertura de código mínima del **85%** verificada automáticamente mediante el plugin de **JaCoCo** durante la fase de compilación.
 

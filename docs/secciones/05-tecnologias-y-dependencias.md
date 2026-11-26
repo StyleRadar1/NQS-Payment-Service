@@ -2,7 +2,7 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/05-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 5. TECNOLOGÍAS Y DEPENDENCIAS
+## 5. TECNOLOGÍAS Y DEPENDENCIAS
 
 El stack del microservicio cumple con el estándar unificado de arquitectura de StyleRadar:
 

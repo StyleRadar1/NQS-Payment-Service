@@ -2,7 +2,7 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/02-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 2. ARQUITECTURA HEXAGONAL CON SUS DIAGRAMAS
+## 2. ARQUITECTURA HEXAGONAL CON SUS DIAGRAMAS
 
 El microservicio `NQS-Payment-Service` (`ms-pagos-suscripciones`) implementa rigurosamente **Arquitectura Hexagonal (Puertos y Adaptadores)** en conjunto con principios de **Domain-Driven Design (DDD)**. El núcleo de negocio permanece 100% puro en Java, completamente desacoplado de dependencias tecnológicas, frameworks web, motores de persistencia o brokers de mensajería.
 

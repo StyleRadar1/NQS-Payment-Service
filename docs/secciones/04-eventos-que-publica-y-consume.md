@@ -2,9 +2,9 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/04-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 4. EVENTOS QUE PUBLICA Y CONSUME (CORREGIR)
+## 4. EVENTOS QUE PUBLICA Y CONSUME (CORREGIR)
 
-La comunicación asíncrona entre microservicios se orquesta a través de **RabbitMQ 3.12**. Este microservicio actúa como **productor** del evento de confirmación de pago.
+La comunicación asíncrona entre microservicios se orquesta a través de **RabbitMQ 3.13**. Este microservicio actúa como **productor** del evento de confirmación de pago.
  
 - **Exchange:** `styleradar.exchange` (topic, durable).
 - **Dead Letter Exchange:** `styleradar.dlx`.

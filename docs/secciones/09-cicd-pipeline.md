@@ -2,7 +2,7 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/09-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 09. CI/CD CON EL BADGE DEL PIPELINE
+## 09. CI/CD CON EL BADGE DEL PIPELINE
 
 El ciclo de vida del software implementa integración continua y entrega continua automatizada mediante **GitHub Actions / Azure Pipelines**:
 

@@ -2,7 +2,7 @@
 
 ---
 
-## <img src="https://img.shields.io/badge/06-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 6. CÓMO EJECUTAR LOCAL Y CON DOCKER
+## 6. CÓMO EJECUTAR LOCAL Y CON DOCKER
 
 ### Prerrequisitos de Entorno
 
