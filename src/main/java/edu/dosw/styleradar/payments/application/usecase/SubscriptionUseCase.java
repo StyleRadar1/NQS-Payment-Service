@@ -1,5 +1,6 @@
 package edu.dosw.styleradar.payments.application.usecase;
 
+import edu.dosw.styleradar.payments.application.dto.response.StoresUpToDateResponse;
 import edu.dosw.styleradar.payments.application.dto.request.StartSubscriptionRequest;
 import edu.dosw.styleradar.payments.application.dto.response.CancellationResponse;
 import edu.dosw.styleradar.payments.application.dto.response.StartSubscriptionResponse;
@@ -55,6 +56,17 @@ public class SubscriptionUseCase implements SubscriptionPort {
         this.mercadoPago = mercadoPago;
         this.clock = clock;
         this.backUrl = backUrl;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StoresUpToDateResponse listStoresUpToDate() {
+        return new StoresUpToDateResponse(subscriptionRepository.findActiveStores(LocalDate.now(clock)).stream()
+                .map(Subscription::getTaxId)
+                .filter(taxId -> taxId != null && !taxId.isBlank())
+                .distinct()
+                .sorted()
+                .toList());
     }
 
     @Override

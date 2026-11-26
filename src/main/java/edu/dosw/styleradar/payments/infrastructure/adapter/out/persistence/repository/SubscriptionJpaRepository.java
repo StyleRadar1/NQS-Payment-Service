@@ -19,4 +19,9 @@ public interface SubscriptionJpaRepository extends JpaRepository<SubscriptionEnt
     Optional<SubscriptionEntity> findFirstByMercadoPagoPreapprovalId(String mercadoPagoPreapprovalId);
 
     List<SubscriptionEntity> findByStatusAndEndDateBefore(SubscriptionStatus status, LocalDate date);
+
+    List<SubscriptionEntity> findBySubscriberTypeAndStatusAndEndDateGreaterThanEqual(
+            edu.dosw.styleradar.payments.domain.model.SubscriberType subscriberType,
+            SubscriptionStatus status,
+            LocalDate date);
 }

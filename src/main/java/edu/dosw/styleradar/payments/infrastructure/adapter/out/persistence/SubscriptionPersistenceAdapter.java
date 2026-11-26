@@ -51,6 +51,16 @@ public class SubscriptionPersistenceAdapter implements SubscriptionRepositoryPor
     }
 
     @Override
+    public List<Subscription> findActiveStores(LocalDate today) {
+        return subscriptionJpaRepository
+                .findBySubscriberTypeAndStatusAndEndDateGreaterThanEqual(
+                        edu.dosw.styleradar.payments.domain.model.SubscriberType.STORE, SubscriptionStatus.ACTIVE, today)
+                .stream()
+                .map(PersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Subscription> findExpiredActive(LocalDate today) {
         return subscriptionJpaRepository
                 .findByStatusAndEndDateBefore(SubscriptionStatus.ACTIVE, today).stream()

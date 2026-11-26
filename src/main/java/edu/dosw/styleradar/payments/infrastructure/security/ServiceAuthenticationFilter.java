@@ -35,6 +35,7 @@ public class ServiceAuthenticationFilter extends OncePerRequestFilter {
     private static final String HEADER_USER_ROLE = "X-User-Role";
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/v1/webhooks",
+            "/api/v1/subscriptions/stores/up-to-date",
             "/api/v1/health",
             "/actuator/health",
             "/actuator/info",

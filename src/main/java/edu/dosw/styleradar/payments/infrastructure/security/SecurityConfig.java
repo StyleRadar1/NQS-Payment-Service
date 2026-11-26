@@ -17,6 +17,7 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_PATHS = {
             "/api/v1/webhooks/**",
+            "/api/v1/subscriptions/stores/up-to-date",
             "/api/v1/health",
             "/actuator/health/**",
             "/actuator/info",

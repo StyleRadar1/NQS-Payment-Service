@@ -1,5 +1,6 @@
 package edu.dosw.styleradar.payments.infrastructure.adapter.in.rest;
 
+import edu.dosw.styleradar.payments.application.dto.response.StoresUpToDateResponse;
 import edu.dosw.styleradar.payments.application.dto.request.CancelSubscriptionRequest;
 import edu.dosw.styleradar.payments.application.dto.request.StartSubscriptionRequest;
 import edu.dosw.styleradar.payments.application.dto.response.CancellationResponse;
@@ -35,6 +36,12 @@ public class SubscriptionController {
             @RequestHeader("X-User-Id") String subscriberId,
             @Valid @RequestBody StartSubscriptionRequest request) {
         return subscriptionPort.start(subscriberId, request);
+    }
+
+    @GetMapping("/stores/up-to-date")
+    @Operation(summary = "List the tax IDs of stores with an active, unexpired subscription (used by the map)")
+    public StoresUpToDateResponse storesUpToDate() {
+        return subscriptionPort.listStoresUpToDate();
     }
 
     @GetMapping("/{subscriberId}")
