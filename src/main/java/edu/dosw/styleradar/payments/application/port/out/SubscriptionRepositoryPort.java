@@ -21,4 +21,6 @@ public interface SubscriptionRepositoryPort {
 
     
     List<Subscription> findExpiredActive(LocalDate today);
+
+    List<Subscription> findActiveStores(LocalDate today);
 }

@@ -26,6 +26,7 @@ La documentación interactiva OpenAPI 3.0 y los contratos de ejecución se encue
 | Método | Endpoint | Descripción | Rol Requerido | Códigos HTTP |
 | :---: | :--- | :--- | :--- | :---: |
 | `POST` | `/api/v1/subscriptions/start` | Inicia una suscripción (`USER` o `STORE`) y retorna el enlace de pago en Mercado Pago (`SR-RF-67`, `SR-RF-93`, `SR-RF-100`) | Autenticado (`JWT` / `X-User-Id`) | `202`, `400`, `401`, `409`, `503` |
+| `GET` | `/api/v1/subscriptions/stores/up-to-date` | NIT de las tiendas con suscripción `ACTIVE` y vigente. La usa `ms-geolocalizacion` para decidir qué tiendas muestra el mapa | Público (solo devuelve NIT) |
 | `GET` | `/api/v1/subscriptions/{subscriberId}` | Consulta el estado, vigencia y plan de una suscripción (`SR-RF-102`) | Titular o `STYLERADAR_ADMIN` / `ADMIN_STYLERADAR` / `ADMIN` | `200`, `401`, `403`, `404` |
 | `POST` | `/api/v1/subscriptions/{subscriberId}/cancel` | Cancela la renovación automática manteniendo el periodo pagado (`SR-RF-68`, `SR-RF-101`) | Titular o `STYLERADAR_ADMIN` / `ADMIN_STYLERADAR` / `ADMIN` | `200`, `400`, `401`, `403`, `404`, `503` |
 | `GET` | `/api/v1/payments/history` | Consulta el historial de pagos del usuario autenticado (`SR-RF-97`) | Autenticado (`JWT` / `X-User-Id`) | `200`, `401` |
