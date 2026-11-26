@@ -54,7 +54,7 @@ SPRING_PROFILES_ACTIVE=dev
 # Persistencia PostgreSQL
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=styleradar_pagos
+DB_NAME=styleradar_payments
 DB_USER=styleradar_user
 DB_PASSWORD=styleradar_secret
 

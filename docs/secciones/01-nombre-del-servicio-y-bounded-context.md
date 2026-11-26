@@ -5,10 +5,11 @@
 
 ## <img src="https://img.shields.io/badge/01-5600EF?style=for-the-badge" height="20" align="absmiddle" /> 1. NOMBRE DEL SERVICIO Y SU BOUNDED CONTEXT
 
-* **Identificador de Servicio:** `ms-pagos-suscripciones`
-* **Paquete Arquitectónico:** `Paquete 4: Pagos y Estadisticas`
+* **Identificador de Servicio:** `NQS-Payment-Service` (`ms-pagos-suscripciones`)
+* **Paquete Arquitectónico:** `Paquete 4: Pagos y Estadísticas`
 * **Puerto de Escucha Oficial:** `8400`
-* **Base de Datos Asignada:** `PostgreSQL 16` (`styleradar_pagos`), aislada bajo el patrón *Database-per-Service*.
+* **Base de Datos Asignada:** `PostgreSQL 16` (`styleradar_payments` en el puerto `5432`), aislada bajo el patrón *Database-per-Service*.
+* **Caché en Memoria:** `Redis 7` (puerto host `6389`) para la idempotencia de webhooks.
 * **Bounded Context:** `Pagos de Suscripciones`
 
 ### Responsabilidades del Dominio
@@ -17,12 +18,12 @@ Este microservicio encapsula las responsabilidades relacionadas con la gestión 
 
 | Qué HACE este Microservicio (Alcance)                             | Qué NO HACE este Microservicio (Límites)                                          |
 | :----------------------------------------------------------------- | :---------------------------------------------------------------------------------- |
-| • Gestiona el proceso de pago de una suscripción, según los requerimientos definidos.                          | • NO autentica usuarios (delegado a `ms-auth` en `:8100`).                     |
-| • Registra y consulta el estado de los pagos.                         | • No administra el catálogo de prendas ni el inventario de las tiendas.     |
-| • Representa los resultados de pago, incluyendo los estados alternativos que definan los requerimientos.                       | • NO envía correos ni WebSockets (delegado a `ms-notificaciones` en `:8300`). |
-| • Garantiza persistencia ACID e idempotencia en su base de datos. | • NO accede directamente a bases de datos de otros microservicios.                 |
+| • Gestiona el proceso de pago de una suscripción mediante la pasarela de Mercado Pago (`SR-RF-67`, `SR-RF-68`, `SR-RF-100`, `SR-RF-101`).| • NO autentica usuarios (delegado a `ms-auth` en `:8100`).                     |
+| • Consulta los pagos de las suscripciones. (`SR-RF-75`, `SR-RF-`)                         | • NO administra el catálogo de prendas ni el inventario de las tiendas.     |
+| • Renueva automáticamente la suscripción de los usuarios y tiendas al finalizar cada periodo. (`SR-RF-95`)| • NO envía correos ni WebSockets (delegado a `ms-notificaciones` en `:8300`). |
+| • Habilita o limita las funciones de los usuarios de acuerdo con el plan activo. (`SR-RF-102`) | • NO accede directamente a bases de datos de otros microservicios.                 |
 
-### Catálogo de Requerimientos Funcionales Oficiales
+### Catálogo de Requerimientos Funcionales Oficiales (Versión 7.0)
 
 El microservicio `ms-pagos-suscripciones` implementa los siguientes requerimientos funcionales oficiales del análisis de requerimientos:
 

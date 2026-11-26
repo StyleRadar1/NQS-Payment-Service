@@ -139,7 +139,7 @@ Este diagrama modela el núcleo de dominio puro en Java (sin anotaciones de Spri
 
 ##### Justificación y Explicación Técnica del Diseño Físico de Persistencia
 
-Este diagrama modela el esquema relacional físico de persistencia en styleradar_pagos para el módulo de Pagos y Suscripciones (NQS):
+Este diagrama modela el esquema relacional físico de persistencia en styleradar_payments para el módulo de Pagos y Suscripciones (NQS):
 
 * **Tablas Relacionales del Microservicio:**
 
