@@ -1,6 +1,6 @@
 <!-- ==============================================================================
   STYLE RADAR · PLANTILLA MAESTRA DE README PARA MICROSERVICIOS
-  Asignatura: DOSW · 2026
+  Asignatura: DOSW (Diseño y Operación de Soluciones Web) · 2026
   Estándar obligatorio unificado para los 13 microservicios del proyecto StyleRadar.
   Microservicio: NQS-Payment-Service (ms-pagos-suscripciones)
   Squad Asignado: NQS (No Queremos Scrum)
@@ -41,31 +41,17 @@
 
   <p align="center">
     <strong><font color="#5600EF">Descubre tu estilo. En tu ciudad.</font></strong><br />
-    <em>Gestión de suscripciones de usuarios y almacenes con Mercado Pago, webhooks idempotentes y publicación de eventos de pago para StyleRadar Bogotá.</em>
+    <em>Gestión de suscripciones de usuarios y almacenes con Mercado Pago, webhooks idempotentes y publicación confiable de eventos de pago para StyleRadar Bogotá.</em>
   </p>
 
   <p align="center">
-    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md">
-      <img src="https://img.shields.io/badge/DEV_LOCAL-Active-16A34A?style=for-the-badge&logo=docker&logoColor=white" alt="DEV Local Active" />
-    </a>
-    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md">
-      <img src="https://img.shields.io/badge/QA_CLOUD-Active-5600EF?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="QA Cloud Active" />
-    </a>
-    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md">
-      <img src="https://img.shields.io/badge/PROD_CLOUD-Active-16A34A?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="PROD Cloud Active" />
-    <a href="https://github.com/StyleRadar1/NQS-Payment-Service/actions/workflows/ci.yml">
-      <img src="https://img.shields.io/badge/CI_MASTER-passing-16A34A?style=for-the-badge&logo=githubactions&logoColor=white" alt="CI Main Status" />
-    </a>
-    <a href="https://github.com/StyleRadar1/NQS-Payment-Service/actions/workflows/ci.yml">
-      <img src="https://img.shields.io/badge/CI_DEVELOP-passing-16A34A?style=for-the-badge&logo=githubactions&logoColor=white" alt="CI Develop Status" />
-    </a>
-    <a href="docs/secciones/08-pruebas-y-cobertura.md">
-      <img src="https://img.shields.io/badge/JaCoCo_Coverage-%E2%89%A5_85%25-16A34A?style=for-the-badge&logo=codecov&logoColor=white" alt="Coverage" />
-    </a>
-    </a>
-    <a href="docs/secciones/09-cicd-pipeline.md">
-      <img src="https://img.shields.io/badge/SonarQube-Quality_Gate_Passed-16A34A?style=for-the-badge&logo=sonarqube&logoColor=white" alt="Quality Gate" />
-    </a>
+    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md"><img src="https://img.shields.io/badge/DEV_LOCAL-Active-16A34A?style=for-the-badge&logo=docker&logoColor=white" alt="DEV Local Active" /></a>
+    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md"><img src="https://img.shields.io/badge/QA_CLOUD-Active-5600EF?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="QA Cloud Active" /></a>
+    <a href="docs/secciones/03-endpoints-y-enlace-a-swagger.md"><img src="https://img.shields.io/badge/PROD_CLOUD-Configured-12063A?style=for-the-badge&logo=azure-app-services&logoColor=white" alt="PROD Cloud Configured" /></a>
+    <a href="https://github.com/StyleRadar1/NQS-Payment-Service/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI_MASTER-passing-16A34A?style=for-the-badge&logo=githubactions&logoColor=white" alt="CI Master Status" /></a>
+    <a href="https://github.com/StyleRadar1/NQS-Payment-Service/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI_DEVELOP-passing-16A34A?style=for-the-badge&logo=githubactions&logoColor=white" alt="CI Develop Status" /></a>
+    <a href="docs/secciones/08-pruebas-y-cobertura.md"><img src="https://img.shields.io/badge/JaCoCo_Coverage-92%25-16A34A?style=for-the-badge&logo=codecov&logoColor=white" alt="Coverage" /></a>
+    <a href="docs/secciones/08-pruebas-y-cobertura.md"><img src="https://img.shields.io/badge/SonarQube-Local_Quality_Gate_Passed-16A34A?style=for-the-badge&logo=sonarqube&logoColor=white" alt="SonarQube Quality Gate" /></a>
   </p>
 
   <p align="center">
@@ -73,10 +59,10 @@
       <img src="https://img.shields.io/badge/JAVA-21__LTS-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
     </a>
     <a href="docs/secciones/05-tecnologias-y-dependencias.md">
-      <img src="https://img.shields.io/badge/SPRING__BOOT-3.2.5-12063A?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
+      <img src="https://img.shields.io/badge/SPRING__BOOT-3.2.5-12063A?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot 3.2.5" />
     </a>
     <a href="docs/secciones/06-como-ejecutar-local-y-docker.md">
-      <img src="https://img.shields.io/badge/DOCKER-OCI__CONTAINER-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+      <img src="https://img.shields.io/badge/DOCKER-OCI__CONTAINER-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker OCI" />
     </a>
     <a href="docs/secciones/05-tecnologias-y-dependencias.md">
       <img src="https://img.shields.io/badge/POSTGRESQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
