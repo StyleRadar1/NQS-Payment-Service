@@ -103,8 +103,7 @@ public class ReconciliationScheduler {
                         order.getAmount().currency()),
                 null));
         if (previousStatus != SubscriptionStatus.ACTIVE) {
-            String previousPlan = previousStatus == SubscriptionStatus.SUSPENDED
-                    ? SubscriptionPlanUpdatedEvent.SUSPENDED : null;
+            String previousPlan = SubscriptionPlanUpdatedEvent.previousPlanForActivation(activeda, previousStatus);
             eventPublisher.publishSubscriptionPlanUpdated(SubscriptionPlanUpdatedEvent.create(
                     activeda, previousPlan, SubscriptionPlanUpdatedEvent.planCode(activeda), null));
         }

@@ -74,7 +74,8 @@ jobs:
           az containerapp update \
             --name "${{ secrets.AZURE_CONTAINER_APP }}" \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}"
+            --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}" \
+            --min-replicas 1
 
   deploy-prod:
     name: Deploy PROD
@@ -92,4 +93,5 @@ jobs:
           az containerapp update \
             --name "${{ secrets.AZURE_CONTAINER_APP_PROD }}" \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}"
+            --image "${{ env.IMAGE_NAME }}:${GITHUB_SHA}" \
+            --min-replicas 1

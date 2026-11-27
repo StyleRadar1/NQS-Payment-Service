@@ -62,7 +62,7 @@ class DemoFlowIntegrationTest {
                     .subscriberType(SubscriberType.USER)
                     .price(BigDecimal.ZERO)
                     .currency("COP")
-                    .limits(Map.of("max_wishlist", 20))
+                    .limits(Map.of("max_wishlist", 20, "try_on_photo", true, "try_on_uses_per_month", 10))
                     .active(true)
                     .createdAt(LocalDateTime.now())
                     .build());
@@ -72,7 +72,7 @@ class DemoFlowIntegrationTest {
                     .subscriberType(SubscriberType.USER)
                     .price(new BigDecimal("14900.00"))
                     .currency("COP")
-                    .limits(Map.of("max_wishlist", -1, "try_on_uses_per_month", 30))
+                    .limits(Map.of("max_wishlist", -1, "try_on_photo", true, "try_on_uses_per_month", 50))
                     .active(true)
                     .createdAt(LocalDateTime.now())
                     .build());

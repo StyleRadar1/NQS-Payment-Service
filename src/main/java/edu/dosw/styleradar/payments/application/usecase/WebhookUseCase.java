@@ -227,8 +227,7 @@ public class WebhookUseCase implements WebhookPort {
                         order.getAmount().currency()),
                 correlationId));
         if (previousStatus != SubscriptionStatus.ACTIVE) {
-            String previousPlan = previousStatus == SubscriptionStatus.SUSPENDED
-                    ? SubscriptionPlanUpdatedEvent.SUSPENDED : null;
+            String previousPlan = SubscriptionPlanUpdatedEvent.previousPlanForActivation(activated, previousStatus);
             eventPublisher.publishSubscriptionPlanUpdated(SubscriptionPlanUpdatedEvent.create(
                     activated, previousPlan, SubscriptionPlanUpdatedEvent.planCode(activated), correlationId));
         }

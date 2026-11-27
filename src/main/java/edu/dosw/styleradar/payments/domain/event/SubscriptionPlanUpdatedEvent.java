@@ -3,6 +3,7 @@ package edu.dosw.styleradar.payments.domain.event;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.dosw.styleradar.payments.domain.model.SubscriberType;
 import edu.dosw.styleradar.payments.domain.model.Subscription;
+import edu.dosw.styleradar.payments.domain.model.SubscriptionStatus;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -56,5 +57,16 @@ public record SubscriptionPlanUpdatedEvent(
             return "PLAN_STORE_MONTHLY";
         }
         return planId != null && planId.equals(2L) ? "PLAN_RADAR_PLUS" : "PLAN_RADAR";
+    }
+
+    public static String previousPlanForActivation(Subscription subscription, SubscriptionStatus previousStatus) {
+        if (previousStatus == SubscriptionStatus.SUSPENDED) {
+            return SUSPENDED;
+        }
+        if (subscription.getSubscriberType() == SubscriberType.USER
+                && "PLAN_RADAR_PLUS".equals(planCode(subscription))) {
+            return "PLAN_RADAR";
+        }
+        return null;
     }
 }

@@ -34,8 +34,8 @@ public class DemoPlanSeeder implements CommandLineRunner {
                 .subscriberType(SubscriberType.USER)
                 .price(BigDecimal.ZERO)
                 .currency("COP")
-                .limits(Map.of("max_wishlist", 20, "try_on_photo", false,
-                        "try_on_uses_per_month", 0, "availability_alerts", false))
+                .limits(Map.of("max_wishlist", 20, "try_on_photo", true,
+                        "try_on_uses_per_month", 10, "availability_alerts", false))
                 .active(true)
                 .createdAt(LocalDateTime.now())
                 .build());
@@ -46,7 +46,7 @@ public class DemoPlanSeeder implements CommandLineRunner {
                 .price(new BigDecimal("14900.00"))
                 .currency("COP")
                 .limits(Map.of("max_wishlist", -1, "try_on_photo", true,
-                        "try_on_uses_per_month", 30, "availability_alerts", true))
+                        "try_on_uses_per_month", 50, "availability_alerts", true))
                 .active(true)
                 .createdAt(LocalDateTime.now())
                 .build());

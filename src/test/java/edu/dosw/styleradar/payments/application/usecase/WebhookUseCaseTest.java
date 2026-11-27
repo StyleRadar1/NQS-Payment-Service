@@ -10,6 +10,7 @@ import edu.dosw.styleradar.payments.application.port.out.SubscriptionRepositoryP
 import edu.dosw.styleradar.payments.application.port.out.WebhookLogPort;
 import edu.dosw.styleradar.payments.application.service.SubscriptionActivationService;
 import edu.dosw.styleradar.payments.domain.event.PaymentConfirmedEvent;
+import edu.dosw.styleradar.payments.domain.event.SubscriptionPlanUpdatedEvent;
 import edu.dosw.styleradar.payments.domain.exception.IdempotencyException;
 import edu.dosw.styleradar.payments.domain.exception.PaymentProcessingException;
 import edu.dosw.styleradar.payments.domain.exception.InvalidRequestException;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -314,5 +317,48 @@ class WebhookUseCaseTest {
         useCase.process(new NotificationPayment("MP-1", null, null, Map.of()), "corr");
 
         verify(webhookLogPort).register(eq("MP-1"), anyMap(), eq("PROCESSED"));
+    }
+
+    @Test
+    void publicaPreviousPlanRadarCuandoBuyerActivaPlanRadarPlusDesdePending() {
+        lockLibre();
+        Subscription pendingSubscription = TestFixtures.conIdSubscription(TestFixtures.pendingUser("USER-1"), 100L);
+        Subscription activatedSubscription = TestFixtures.activeUser("USER-1",
+                TestFixtures.HOY, TestFixtures.HOY.plusMonths(1));
+        PaymentOrder pendingOrder = TestFixtures.conIdOrder(TestFixtures.pending(100L, "14900"), 10L);
+        when(paymentOrderRepository.findByExternalPaymentId("MP-1")).thenReturn(Optional.of(pendingOrder));
+        when(mercadoPago.getPayment("MP-1")).thenReturn(payment("approved", null, null));
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(pendingSubscription));
+        when(activetionService.activate(any(), any(), any())).thenReturn(activatedSubscription);
+
+        useCase.process(notification("MP-1"), "corr-upgrade");
+
+        ArgumentCaptor<SubscriptionPlanUpdatedEvent> captor = ArgumentCaptor.forClass(SubscriptionPlanUpdatedEvent.class);
+        verify(eventPublisher).publishSubscriptionPlanUpdated(captor.capture());
+        assertThat(captor.getValue().data().subscriberType()).isEqualTo("BUYER");
+        assertThat(captor.getValue().data().previousPlan()).isEqualTo("PLAN_RADAR");
+        assertThat(captor.getValue().data().currentPlan()).isEqualTo("PLAN_RADAR_PLUS");
+    }
+
+    @Test
+    void publicaPreviousPlanSuspendedCuandoBuyerReactivaDesdeSuspended() {
+        lockLibre();
+        Subscription suspendedSubscription = TestFixtures.suspendedUser("USER-1");
+        Subscription activatedSubscription = TestFixtures.activeUser("USER-1",
+                TestFixtures.HOY, TestFixtures.HOY.plusMonths(1));
+        PaymentOrder pendingOrder = TestFixtures.conIdOrder(TestFixtures.pending(101L, "14900"), 11L);
+        when(paymentOrderRepository.findByExternalPaymentId("MP-1")).thenReturn(Optional.of(pendingOrder));
+        when(mercadoPago.getPayment("MP-1")).thenReturn(payment("approved", null, null));
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(subscriptionRepository.findById(101L)).thenReturn(Optional.of(suspendedSubscription));
+        when(activetionService.activate(any(), any(), any())).thenReturn(activatedSubscription);
+
+        useCase.process(notification("MP-1"), "corr-reactivate");
+
+        ArgumentCaptor<SubscriptionPlanUpdatedEvent> captor = ArgumentCaptor.forClass(SubscriptionPlanUpdatedEvent.class);
+        verify(eventPublisher).publishSubscriptionPlanUpdated(captor.capture());
+        assertThat(captor.getValue().data().previousPlan()).isEqualTo(SubscriptionPlanUpdatedEvent.SUSPENDED);
+        assertThat(captor.getValue().data().currentPlan()).isEqualTo("PLAN_RADAR_PLUS");
     }
 }
