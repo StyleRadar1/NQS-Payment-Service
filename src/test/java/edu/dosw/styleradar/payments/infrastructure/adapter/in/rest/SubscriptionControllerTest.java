@@ -6,6 +6,7 @@ import edu.dosw.styleradar.payments.application.dto.response.StartSubscriptionRe
 import edu.dosw.styleradar.payments.application.dto.response.PlanResponse;
 import edu.dosw.styleradar.payments.application.dto.response.SubscriptionResponse;
 import edu.dosw.styleradar.payments.application.port.in.SubscriptionPort;
+import edu.dosw.styleradar.payments.application.port.out.StoreAccountPort;
 import edu.dosw.styleradar.payments.domain.exception.InvalidRequestException;
 import edu.dosw.styleradar.payments.domain.model.SubscriptionStatus;
 import edu.dosw.styleradar.payments.domain.model.SubscriberType;
@@ -37,6 +38,8 @@ class SubscriptionControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private SubscriptionPort subscriptionPort;
+    @MockBean
+    private StoreAccountPort storeAccountPort;
 
     @Test
     void iniciaSubscription() throws Exception {
@@ -46,6 +49,7 @@ class SubscriptionControllerTest {
 
         mockMvc.perform(post("/api/v1/subscriptions/start")
                         .header("X-User-Id", "USER-1")
+                        .header("X-User-Role", "BUYER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"subscriberType":"USER","payerEmail":"a@b.com","planId":2}
@@ -61,6 +65,7 @@ class SubscriptionControllerTest {
     void validaEmailObligatorio() throws Exception {
         mockMvc.perform(post("/api/v1/subscriptions/start")
                         .header("X-User-Id", "USER-1")
+                        .header("X-User-Role", "BUYER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"subscriberType":"USER","payerEmail":""}
@@ -88,6 +93,7 @@ class SubscriptionControllerTest {
 
         mockMvc.perform(post("/api/v1/subscriptions/start")
                         .header("X-User-Id", "USER-1")
+                        .header("X-User-Role", "BUYER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"subscriberType":"USER","payerEmail":"a@b.com"}
@@ -95,6 +101,69 @@ class SubscriptionControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
                 .andExpect(jsonPath("$.detail").value("Email inválido"));
+    }
+
+    @Test
+    void iniciaSubscriptionDeTiendaConNitPropio() throws Exception {
+        when(storeAccountPort.belongsToStore("STORE-1", "900123456", "Bearer test-token"))
+                .thenReturn(true);
+        when(subscriptionPort.start(eq("STORE-1"), any()))
+                .thenReturn(new StartSubscriptionResponse(100L, 200L,
+                        SubscriptionStatus.PENDING, "https://mp/init", "Continúa"));
+
+        mockMvc.perform(post("/api/v1/subscriptions/start")
+                        .header("X-User-Id", "STORE-1")
+                        .header("X-User-Role", "STORE_ADMIN")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"subscriberType":"STORE","payerEmail":"store@test.com","planId":3,"taxId":"900123456"}
+                                """))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.orderId").value(200));
+    }
+
+    @Test
+    void rechazaNitQueNoPerteneceALaTienda() throws Exception {
+        when(storeAccountPort.belongsToStore("STORE-1", "900123456", "Bearer test-token"))
+                .thenReturn(false);
+
+        mockMvc.perform(post("/api/v1/subscriptions/start")
+                        .header("X-User-Id", "STORE-1")
+                        .header("X-User-Role", "STORE_ADMIN")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"subscriberType":"STORE","payerEmail":"store@test.com","planId":3,"taxId":"900123456"}
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void rechazaTiendaSinRolDeTienda() throws Exception {
+        mockMvc.perform(post("/api/v1/subscriptions/start")
+                        .header("X-User-Id", "STORE-1")
+                        .header("X-User-Role", "BUYER")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"subscriberType":"STORE","payerEmail":"store@test.com","planId":3,"taxId":"900123456"}
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void rechazaStoreSinAuthorizationParaValidarNit() throws Exception {
+        mockMvc.perform(post("/api/v1/subscriptions/start")
+                        .header("X-User-Id", "STORE-1")
+                        .header("X-User-Role", "STORE_ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"subscriberType":"STORE","payerEmail":"store@test.com","planId":3,"taxId":"900123456"}
+                                """))
+                .andExpect(status().isForbidden());
     }
 
     @Test
