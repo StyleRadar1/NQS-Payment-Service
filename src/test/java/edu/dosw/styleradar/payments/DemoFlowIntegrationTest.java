@@ -104,6 +104,7 @@ class DemoFlowIntegrationTest {
     void completeSubscriptionPaymentFlow() throws Exception {
         MvcResult start = mockMvc.perform(post("/api/v1/subscriptions/start")
                         .header("X-User-Id", "1")
+                        .header("X-User-Role", "BUYER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"subscriberType":"USER","payerEmail":"demo@testuser.com","planId":2}

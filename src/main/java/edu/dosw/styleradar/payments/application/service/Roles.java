@@ -21,6 +21,29 @@ public final class Roles {
                 || normalized.equals("ROLE_ADMIN_STYLERADAR");
     }
 
+    public static boolean isStoreAdmin(String role) {
+        if (role == null || role.isBlank()) {
+            return false;
+        }
+        String normalized = role.trim().toUpperCase(Locale.ROOT);
+        return normalized.equals("STORE_ADMIN")
+                || normalized.equals("ROLE_STORE_ADMIN")
+                || normalized.equals("ADMIN_ALMACEN")
+                || normalized.equals("ROLE_ADMIN_ALMACEN")
+                || normalized.equals("TIENDA");
+    }
+
+    public static boolean isBuyer(String role) {
+        if (role == null || role.isBlank()) {
+            return false;
+        }
+        String normalized = role.trim().toUpperCase(Locale.ROOT);
+        return normalized.equals("BUYER")
+                || normalized.equals("ROLE_BUYER")
+                || normalized.equals("COMPRADOR")
+                || normalized.equals("ROLE_COMPRADOR");
+    }
+
     public static boolean isOwner(String subscriberId, String requesterId) {
         return subscriberId != null && subscriberId.equals(requesterId);
     }

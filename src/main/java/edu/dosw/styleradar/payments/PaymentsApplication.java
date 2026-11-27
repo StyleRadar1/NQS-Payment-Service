@@ -8,7 +8,10 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
-@EnableFeignClients(basePackages = "edu.dosw.styleradar.payments.infrastructure.adapter.out.payment")
+@EnableFeignClients(basePackages = {
+        "edu.dosw.styleradar.payments.infrastructure.adapter.out.payment",
+        "edu.dosw.styleradar.payments.infrastructure.adapter.out.stores"
+})
 @EnableScheduling
 @ConfigurationPropertiesScan
 public class PaymentsApplication {

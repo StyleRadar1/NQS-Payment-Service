@@ -31,6 +31,8 @@ mercadopago:
   back-url: ${MP_BACK_URL}
 
 styleradar:
+  stores:
+    url: ${STORES_SERVICE_URL:https://styleradar-tiendas-prod.azurewebsites.net}
   security:
     jwt:
       enabled: true

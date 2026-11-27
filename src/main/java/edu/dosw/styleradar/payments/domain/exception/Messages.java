@@ -50,6 +50,14 @@ public final class Messages {
             "El identificador del almacén es obligatorio.";
     public static final String TAX_ID_REQUIRED =
             "El NIT debe tener exactamente 9 dígitos.";
+    public static final String STORE_ROLE_REQUIRED =
+            "Solo un administrador de tienda puede iniciar una suscripción de tienda.";
+    public static final String BUYER_ROLE_REQUIRED =
+            "Solo un comprador puede iniciar una suscripción de comprador.";
+    public static final String STORE_NIT_NOT_OWNED =
+            "El NIT no corresponde a la tienda asociada a tu cuenta.";
+    public static final String STORE_OWNERSHIP_UNAVAILABLE =
+            "No fue posible validar la tienda asociada a tu cuenta. Inténtalo nuevamente.";
     public static final String ORDER_NOT_REJECTED =
             "Solo se pueden reintentar pagos rechazados.";
     public static final String SUBSCRIBER_TYPE_REQUIRED =

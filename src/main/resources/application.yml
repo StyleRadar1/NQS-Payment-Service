@@ -74,6 +74,9 @@ mercadopago:
     url: ${MP_API_URL:https://api.mercadopago.com}
 
 styleradar:
+  stores:
+    # ms-tiendas: se consulta con el JWT del usuario para validar la propiedad del NIT.
+    url: ${STORES_SERVICE_URL:http://localhost:8140}
   security:
     jwt:
       enabled: ${JWT_VALIDATION_ENABLED:false}
