@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:styleradar_pagos;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:styleradar_payments;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -27,7 +27,7 @@ mercadopago:
   public-key: TEST-MOCK
   webhook-secret: test-webhook-secret
   webhook-url: http://localhost:8400/api/v1/webhooks/mercadopago
-  back-url: http://localhost:4200/suscripciones
+  back-url: http://localhost:4200/subscriptions
   api:
     url: http://localhost:9999
 
@@ -51,4 +51,4 @@ management:
 logging:
   level:
     root: WARN
-    edu.dosw.styleradar.pagos: INFO
+    edu.dosw.styleradar.payments: INFO

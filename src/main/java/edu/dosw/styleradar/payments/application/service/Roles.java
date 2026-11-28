@@ -1,0 +1,50 @@
+package edu.dosw.styleradar.payments.application.service;
+
+import java.util.Locale;
+
+public final class Roles {
+
+    private Roles() {
+    }
+
+    public static boolean isAdmin(String role) {
+        if (role == null || role.isBlank()) {
+            return false;
+        }
+        String normalized = role.trim().toUpperCase(Locale.ROOT);
+        return normalized.equals("STYLERADAR_ADMIN")
+                || normalized.equals("ROLE_STYLERADAR_ADMIN")
+                // Compatibilidad temporal con tokens emitidos antes del cambio oficial de roles.
+                || normalized.equals("ADMIN")
+                || normalized.equals("ROLE_ADMIN")
+                || normalized.equals("ADMIN_STYLERADAR")
+                || normalized.equals("ROLE_ADMIN_STYLERADAR");
+    }
+
+    public static boolean isStoreAdmin(String role) {
+        if (role == null || role.isBlank()) {
+            return false;
+        }
+        String normalized = role.trim().toUpperCase(Locale.ROOT);
+        return normalized.equals("STORE_ADMIN")
+                || normalized.equals("ROLE_STORE_ADMIN")
+                || normalized.equals("ADMIN_ALMACEN")
+                || normalized.equals("ROLE_ADMIN_ALMACEN")
+                || normalized.equals("TIENDA");
+    }
+
+    public static boolean isBuyer(String role) {
+        if (role == null || role.isBlank()) {
+            return false;
+        }
+        String normalized = role.trim().toUpperCase(Locale.ROOT);
+        return normalized.equals("BUYER")
+                || normalized.equals("ROLE_BUYER")
+                || normalized.equals("COMPRADOR")
+                || normalized.equals("ROLE_COMPRADOR");
+    }
+
+    public static boolean isOwner(String subscriberId, String requesterId) {
+        return subscriberId != null && subscriberId.equals(requesterId);
+    }
+}
